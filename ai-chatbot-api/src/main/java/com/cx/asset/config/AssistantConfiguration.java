@@ -5,6 +5,7 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
+import dev.langchain4j.service.AiServices;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,9 @@ import com.cx.asset.controller.ChatModelController;
 import com.cx.asset.listener.MyChatModelListener;
 import com.cx.asset.service.Assistant;
 import com.cx.asset.service.StreamingAssistant;
+import com.cx.asset.tool.InventoryTools;
+import com.cx.asset.tool.OrderTools;
+import com.cx.asset.tool.ReportingTools;
 
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
@@ -40,14 +44,17 @@ public class AssistantConfiguration {
         return new MyChatModelListener();
     }
     
-    /**
-     * Ollama Chat Model (Llama3)
-     */
-	/*
-	 * @Bean public ChatModel chatModel(ChatModelListener listener) { return
-	 * OllamaChatModel.builder() .baseUrl("http://localhost:11434") // Ollama
-	 * default .modelName("llama3") // your model .temperature(0.7)
-	 * .timeout(java.time.Duration.ofSeconds(60))
-	 * .listeners(java.util.List.of(listener)) // attach listener .build(); }
-	 */
+       
+   
+    @Bean
+    public Assistant assistant(ChatModel chatModel,
+                               ChatMemory chatMemory,
+                               OrderTools orderTools, InventoryTools inventoryTools, ReportingTools reportingTools) {
+
+        return AiServices.builder(Assistant.class)
+                .chatModel(chatModel)
+                .chatMemory(chatMemory)
+                .tools(orderTools,inventoryTools, reportingTools) // 👈 ADD TOOL HERE
+                .build();
+    }
 }
