@@ -21,7 +21,7 @@ A React-based user interface for the AI Chatbot application, built with Vite for
 
 ## Running the Application Locally
 
-1. Start the development server:
+1. Start the  server:
    ```
    npm run dev
    ```
@@ -29,32 +29,6 @@ A React-based user interface for the AI Chatbot application, built with Vite for
 2. Open your browser and navigate to `http://localhost:5173` to view the application.
 
 The development server supports hot module replacement, so changes to the code will be reflected immediately in the browser.
-
-## Building for Production
-
-To create a production build:
-
-```
-npm run build
-```
-
-This will generate optimized files in the `dist` directory, ready for deployment.
-
-## Linting
-
-To check code quality and run the linter:
-
-```
-npm run lint
-```
-
-## Project Structure
-
-- `src/App.jsx` - Main application component with login page
-- `src/App.css` - Styles for the login interface
-- `src/main.jsx` - Application entry point
-- `public/` - Static assets
-- `dist/` - Production build output (after running `npm run build`)
 
 ## Technologies Used
 
