@@ -1,5 +1,9 @@
 package com.cx.asset.config;
 
+import com.cx.asset.service.Assistant;
+import com.cx.asset.tool.InventoryTools;
+import com.cx.asset.tool.OrderTools;
+import com.cx.asset.tool.ReportingTools;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -11,13 +15,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
-import com.cx.asset.controller.ChatModelController;
-import com.cx.asset.listener.MyChatModelListener;
-import com.cx.asset.service.Assistant;
-import com.cx.asset.service.StreamingAssistant;
-import com.cx.asset.tool.InventoryTools;
-import com.cx.asset.tool.OrderTools;
-import com.cx.asset.tool.ReportingTools;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.beans.factory.config.ConfigurableBeanFactory.SCOPE_PROTOTYPE;
 
@@ -25,36 +24,53 @@ import static org.springframework.beans.factory.config.ConfigurableBeanFactory.S
 public class AssistantConfiguration {
 
     /**
-     * This chat memory will be used by {@link Assistant} and {@link StreamingAssistant}
+     * Each session gets its own Assistant with its own ChatMemory.
      */
-    @Bean
-    @Scope(SCOPE_PROTOTYPE)
-    ChatMemory chatMemory() {
-        return MessageWindowChatMemory.withMaxMessages(10);
+    private final Map<String, Assistant> sessionAssistants = new ConcurrentHashMap<>();
+    private final ChatModel chatModel;
+    private final OrderTools orderTools;
+    private final InventoryTools inventoryTools;
+    private final ReportingTools reportingTools;
+
+    public AssistantConfiguration(ChatModel chatModel, OrderTools orderTools, InventoryTools inventoryTools, ReportingTools reportingTools) {
+        this.chatModel = chatModel;
+        this.orderTools = orderTools;
+        this.inventoryTools = inventoryTools;
+        this.reportingTools = reportingTools;
     }
 
     /**
-     * This listener will be injected into every {@link ChatModel} and {@link StreamingChatModel}
-     * bean   found in the application context.
-     * It will listen for {@link ChatModel} in the {@link ChatModelController} as well as
-     * {@link Assistant} and {@link StreamingAssistant}.
+     * Returns existing Assistant for this session, or creates a new one.
+     * <p>
+     * computeIfAbsent is atomic — safe if two requests come at the same time
+     * for the same sessionId.
      */
-    @Bean
-    ChatModelListener chatModelListener() {
-        return new MyChatModelListener();
-    }
-    
-       
-   
-    @Bean
-    public Assistant assistant(ChatModel chatModel,
-                               ChatMemory chatMemory,
-                               OrderTools orderTools, InventoryTools inventoryTools, ReportingTools reportingTools) {
+    public Assistant getOrCreateAssistant(String sessionId) {
+        return sessionAssistants.computeIfAbsent(sessionId, id -> {
+            // Each session gets its own independent ChatMemory (last 10 messages)
+            ChatMemory memory = MessageWindowChatMemory.withMaxMessages(10);
 
-        return AiServices.builder(Assistant.class)
-                .chatModel(chatModel)
-                .chatMemory(chatMemory)
-                .tools(orderTools,inventoryTools, reportingTools) // 👈 ADD TOOL HERE
-                .build();
+            return AiServices.builder(Assistant.class)
+                    .chatModel(chatModel)
+                    .chatMemory(memory)
+                    .tools(orderTools, inventoryTools, reportingTools)
+                    .build();
+        });
+    }
+
+    /**
+     * Call this when a session ends or user logs out.
+     * Frees memory so the map doesn't grow forever.
+     */
+    public void clearSession(String sessionId) {
+        sessionAssistants.remove(sessionId);
+    }
+
+    /**
+     * Useful for admin/debug: how many active sessions are in memory?
+     */
+    public int getActiveSessionCount() {
+        return sessionAssistants.size();
     }
 }
+
