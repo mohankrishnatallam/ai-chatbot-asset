@@ -1,0 +1,28 @@
+{
+  "collection": "users",
+  "description": "Auth credentials from AuthPage; hash passwords in application layer before insert.",
+  "bsonFields": {
+    "_id": "ObjectId",
+    "username": "string (required, unique index)",
+    "passwordHash": "string (required)",
+    "createdAt": "date (required)",
+    "updatedAt": "date (required)"
+  },
+  "indexes": [
+    { "key": { "username": 1 }, "options": { "unique": true } }
+  ],
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["username", "passwordHash", "createdAt", "updatedAt"],
+      "properties": {
+        "_id": { "bsonType": "objectId" },
+        "username": { "bsonType": "string", "minLength": 1 },
+        "passwordHash": { "bsonType": "string", "minLength": 1 },
+        "createdAt": { "bsonType": "date" },
+        "updatedAt": { "bsonType": "date" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
