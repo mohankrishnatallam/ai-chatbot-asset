@@ -24,7 +24,7 @@ public class AiService {
             Assistant sessionAssistant = assistantConfiguration.getOrCreateAssistant(sessionId);
             String json = sessionAssistant.chat(message);
             AiResponse aiResponse = mapper.readValue(json, AiResponse.class);
-            chatMemoryService.saveExchange(sessionId, message, aiResponse.getMessage());
+            chatMemoryService.saveExchange(sessionId, message, aiResponse);
 
             return aiResponse;
 

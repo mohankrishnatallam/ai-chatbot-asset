@@ -1,8 +1,11 @@
 package com.cx.asset.service;
 
+import com.cx.asset.dto.AiResponse;
 import com.cx.asset.entity.ChatMessage;
 import com.cx.asset.entity.ChatSession;
+import com.cx.asset.entity.ChatTurn;
 import com.cx.asset.repository.ChatSessionRepository;
+import com.cx.asset.repository.ChatTurnRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,35 +17,41 @@ import java.util.List;
 public class ChatMemoryService {
 
     private final ChatSessionRepository chatSessionRepository;
+    private final ChatTurnRepository chatTurnRepository;
 
-    public ChatMemoryService(ChatSessionRepository chatSessionRepository) {
+    public ChatMemoryService(ChatSessionRepository chatSessionRepository,
+                             ChatTurnRepository chatTurnRepository) {
         this.chatSessionRepository = chatSessionRepository;
+        this.chatTurnRepository = chatTurnRepository;
     }
 
-    public void saveExchange(String sessionId, String userMessage, String aiResponse) {
-        ChatSession session = chatSessionRepository.findBySessionId(sessionId)
+    /**
+     * Saves one complete exchange (question + AI response) to chat_turns.
+     */
+    public void saveExchange(String sessionId, String question, AiResponse aiResponse) {
+        ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseGet(() -> {
-                    ChatSession s = new ChatSession();
-                    s.setSessionId(sessionId);
-                    s.setCreatedAt(LocalDateTime.now());
-                    s.setMessages(new ArrayList<>());
-                    return s;
+                    String title = question.length() > 50
+                            ? question.substring(0, 50) + "..."
+                            : question;
+                    ChatSession s = new ChatSession(title);
+                    s.setId(sessionId);
+                    return chatSessionRepository.save(s);
                 });
 
-        List<ChatMessage> msgs = session.getMessages();
-        if (msgs == null) msgs = new ArrayList<>();
-
-        msgs.add(new ChatMessage("USER", userMessage));
-        msgs.add(new ChatMessage("AI", aiResponse));
-
-        session.setMessages(msgs);
+        session.setUpdatedAt(LocalDateTime.now());
         chatSessionRepository.save(session);
+        int sequence = chatTurnRepository.countBySessionId(sessionId);
+        ChatTurn turn = new ChatTurn(sessionId, question, aiResponse, sequence);
+        chatTurnRepository.save(turn);
     }
 
-    public List<ChatMessage> getMessages(String sessionId) {
-        return chatSessionRepository.findBySessionId(sessionId)
-                .map(ChatSession::getMessages)
-                .orElse(new ArrayList<>());
+    /**
+     * Returns all turns for a session in order.
+     * This is to show conversation history in the UI.
+     */
+    public List<ChatTurn> getTurns(String sessionId) {
+        return chatTurnRepository.findBySessionIdOrderBySequenceAsc(sessionId);
     }
 
 }
