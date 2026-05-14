@@ -1,0 +1,12 @@
+Logical table (relational view)     MongoDB collection      Source in repo
+------------------------------------  ----------------------  ------------------------------------------
+users                                 users                   ai-chatbot-ui AuthPage (username, password)
+chat_sessions                         chat_sessions           HomePage conversations grouping / History
+chat_turns                            chat_turns              HomePage { question, answer }; full AiResponse from API
+orders                                orders                  OrderTools createNewOrder, cancelOrder, createOrder
+inventory_items                       inventory_items         InventoryTools checkInventory, reserveStock
+report_snapshots                      report_snapshots        ReportingTools generateSalesReport, generateInventoryReport
+
+Notes:
+- MongoDB has collections and documents, not SQL tables; this file maps familiar "table" names to collection names.
+- assistantApi.js currently returns only the JSON field "message"; storing chat_turns should persist the full AiResponse object when the API exposes it.

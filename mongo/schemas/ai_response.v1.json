@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://local/asset/chatbot/ai_response.v1.json",
+  "title": "AiResponse",
+  "description": "Strict JSON contract from com.cx.asset.service.Assistant (LangChain4j system message).",
+  "type": "object",
+  "required": ["type", "status", "message"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["ORDER", "INVENTORY", "REPORT", "INFO", "ERROR"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["SUCCESS", "FAILED"]
+    },
+    "data": {
+      "type": ["object", "array", "string", "number", "boolean", "null"]
+    },
+    "message": { "type": "string" }
+  },
+  "additionalProperties": false
+}

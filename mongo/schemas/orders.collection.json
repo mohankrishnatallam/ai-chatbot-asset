@@ -1,0 +1,42 @@
+{
+  "collection": "orders",
+  "description": "Persisted orders for OrderTools (createNewOrder, cancelOrder, createOrder). createNewOrder uses customerId/productId; createOrder uses productName — at least one product identifier should be set in application code.",
+  "bsonFields": {
+    "_id": "ObjectId",
+    "orderId": "string (required, unique) — e.g. ORD-<timestamp>",
+    "customerId": "string | null — createNewOrder",
+    "productId": "string | null — createNewOrder",
+    "productName": "string | null — createOrder(productName, quantity)",
+    "quantity": "int (required, minimum 1)",
+    "shippingAddress": "string | null",
+    "status": "string (required) — CREATED | CANCELLED | …",
+    "totalPrice": "double | int | long | null",
+    "createdAt": "date (required)",
+    "updatedAt": "date (required)"
+  },
+  "indexes": [
+    { "key": { "orderId": 1 }, "options": { "unique": true } },
+    { "key": { "customerId": 1, "createdAt": -1 } },
+    { "key": { "productId": 1 } }
+  ],
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["orderId", "quantity", "status", "createdAt", "updatedAt"],
+      "properties": {
+        "_id": { "bsonType": "objectId" },
+        "orderId": { "bsonType": "string", "minLength": 1 },
+        "customerId": { "bsonType": ["string", "null"] },
+        "productId": { "bsonType": ["string", "null"] },
+        "productName": { "bsonType": ["string", "null"] },
+        "quantity": { "bsonType": "int", "minimum": 1 },
+        "shippingAddress": { "bsonType": ["string", "null"] },
+        "status": { "bsonType": "string", "minLength": 1 },
+        "totalPrice": { "bsonType": ["double", "int", "long", "null"] },
+        "createdAt": { "bsonType": "date" },
+        "updatedAt": { "bsonType": "date" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
