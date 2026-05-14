@@ -1,0 +1,28 @@
+{
+  "collection": "report_snapshots",
+  "description": "Point-in-time report payloads from ReportingTools (generateSalesReport, generateInventoryReport).",
+  "bsonFields": {
+    "_id": "ObjectId",
+    "reportType": "string (required) — SALES | INVENTORY",
+    "payload": "object (required) — e.g. { totalOrders, revenue } or { totalProducts, lowStock }",
+    "generatedAt": "date (required)",
+    "requestedByUserId": "ObjectId | null"
+  },
+  "indexes": [
+    { "key": { "reportType": 1, "generatedAt": -1 } }
+  ],
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["reportType", "payload", "generatedAt"],
+      "properties": {
+        "_id": { "bsonType": "objectId" },
+        "reportType": { "enum": ["SALES", "INVENTORY"] },
+        "payload": { "bsonType": "object" },
+        "generatedAt": { "bsonType": "date" },
+        "requestedByUserId": { "bsonType": ["objectId", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "collection": "chat_turns",
+  "description": "One user question and assistant reply; UI stores answer as string today — persist assistantPayload when API returns full AiResponse.",
+  "bsonFields": {
+    "_id": "ObjectId",
+    "sessionId": "ObjectId (required, ref chat_sessions._id)",
+    "question": "string (required)",
+    "answerText": "string (required) — display string (e.g. AiResponse.message)",
+    "assistantPayload": "object | null — full AiResponse { type, status, data?, message }",
+    "sequence": "int (required, 0-based order within session)",
+    "createdAt": "date (required)"
+  },
+  "indexes": [
+    { "key": { "sessionId": 1, "sequence": 1 }, "options": { "unique": true } },
+    { "key": { "sessionId": 1, "createdAt": 1 } }
+  ],
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["sessionId", "question", "answerText", "sequence", "createdAt"],
+      "properties": {
+        "_id": { "bsonType": "objectId" },
+        "sessionId": { "bsonType": "objectId" },
+        "question": { "bsonType": "string", "minLength": 1 },
+        "answerText": { "bsonType": "string" },
+        "assistantPayload": {
+          "anyOf": [
+            { "bsonType": "null" },
+            {
+              "bsonType": "object",
+              "required": ["type", "status", "message"],
+              "properties": {
+                "type": { "enum": ["ORDER", "INVENTORY", "REPORT", "INFO", "ERROR"] },
+                "status": { "enum": ["SUCCESS", "FAILED"] },
+                "data": {
+                  "bsonType": ["object", "array", "string", "double", "int", "long", "bool", "null"]
+                },
+                "message": { "bsonType": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "sequence": { "bsonType": "int", "minimum": 0 },
+        "createdAt": { "bsonType": "date" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
