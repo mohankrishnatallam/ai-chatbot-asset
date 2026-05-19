@@ -6,6 +6,8 @@ ai-chatbot-ui/node_modules/
  * . i m l 
 **/.idea/
 *.iml
+target/
+${project.build.directory}/
 
 
  
