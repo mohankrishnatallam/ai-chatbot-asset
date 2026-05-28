@@ -1,0 +1,12 @@
+mongo/
+  TABLES.txt                          Logical "tables" -> collection names + repo mapping
+  INDEX.txt                           This file list
+  init-collections.mongosh.js          Creates DB collections, validators, indexes (mongosh)
+  schemas/
+    ai_response.v1.json               API contract (AiResponse / Assistant JSON)
+    users.collection.json
+    chat_sessions.collection.json
+    chat_turns.collection.json
+    orders.collection.json
+    inventory_items.collection.json
+    report_snapshots.collection.json

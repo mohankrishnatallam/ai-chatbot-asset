@@ -1,0 +1,29 @@
+{
+  "collection": "chat_sessions",
+  "description": "One chat thread; aligns with HomePage History / multi-turn context.",
+  "bsonFields": {
+    "_id": "ObjectId",
+    "userId": "ObjectId | null (optional until auth is wired)",
+    "title": "string (required)",
+    "createdAt": "date (required)",
+    "updatedAt": "date (required)"
+  },
+  "indexes": [
+    { "key": { "userId": 1, "updatedAt": -1 } },
+    { "key": { "updatedAt": -1 } }
+  ],
+  "validator": {
+    "$jsonSchema": {
+      "bsonType": "object",
+      "required": ["title", "createdAt", "updatedAt"],
+      "properties": {
+        "_id": { "bsonType": "objectId" },
+        "userId": { "bsonType": ["objectId", "null"] },
+        "title": { "bsonType": "string", "minLength": 1 },
+        "createdAt": { "bsonType": "date" },
+        "updatedAt": { "bsonType": "date" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

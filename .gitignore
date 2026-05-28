@@ -1,3 +1,14 @@
 # Build output
 ai-chatbot-api/target/
 ai-chatbot-ui/node_modules/
+. i d e a / 
+ 
+ * . i m l 
+**/.idea/
+*.iml
+target/
+${project.build.directory}/
+
+
+ 
+ 
