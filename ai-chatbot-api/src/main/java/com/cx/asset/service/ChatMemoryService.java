@@ -1,16 +1,13 @@
 package com.cx.asset.service;
 
 import com.cx.asset.dto.AiResponse;
-import com.cx.asset.entity.ChatMessage;
 import com.cx.asset.entity.ChatSession;
 import com.cx.asset.entity.ChatTurn;
 import com.cx.asset.repository.ChatSessionRepository;
 import com.cx.asset.repository.ChatTurnRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,7 +23,7 @@ public class ChatMemoryService {
     }
 
     /**
-     * Saves one complete exchange (question + AI response) to chat_turns.
+     * Save one complete exchange (user question + AI response) to MongoDB.
      */
     public void saveExchange(String sessionId, String question, AiResponse aiResponse) {
         ChatSession session = chatSessionRepository.findById(sessionId)
@@ -46,12 +43,7 @@ public class ChatMemoryService {
         chatTurnRepository.save(turn);
     }
 
-    /**
-     * Returns all turns for a session in order.
-     * This is to show conversation history in the UI.
-     */
-    public List<ChatTurn> getTurns(String sessionId) {
+    public List<ChatTurn> getHistory(String sessionId) {
         return chatTurnRepository.findBySessionIdOrderBySequenceAsc(sessionId);
     }
-
 }
