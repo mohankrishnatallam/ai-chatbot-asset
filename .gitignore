@@ -1,14 +1,24 @@
-# Build output
-ai-chatbot-api/target/
-ai-chatbot-ui/node_modules/
-. i d e a / 
- 
- * . i m l 
+# IntelliJ
+.idea/
 **/.idea/
 *.iml
+
+# Maven / Spring Boot
 target/
+**/target/
 ${project.build.directory}/
 
+# React / Node
+node_modules/
+**/node_modules/
 
- 
- 
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
