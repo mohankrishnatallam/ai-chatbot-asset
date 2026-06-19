@@ -24,7 +24,6 @@ public class ChatModelController {
         this.chatModel = chatModel;
     }
     
- 
 
     @PostConstruct
     public void checkEnv() {
