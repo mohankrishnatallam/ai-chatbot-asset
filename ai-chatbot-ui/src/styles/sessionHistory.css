@@ -1,0 +1,138 @@
+.history-panel {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 12px 24px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.history-title,
+.history-detail-title {
+  margin: 0;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  color: #1f2937;
+}
+
+.history-home-button,
+.history-back-button {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.history-back-button {
+  margin-bottom: 16px;
+}
+
+.history-detail-meta,
+.history-session-meta,
+.history-status,
+.history-empty {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.history-detail-meta {
+  margin: 8px 0 20px;
+}
+
+.history-error {
+  color: #b91c1c;
+  font-size: 0.92rem;
+}
+
+.history-session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-session-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.history-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.history-delete-button {
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #b91c1c;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.history-delete-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.history-session-card {
+  width: 100%;
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.history-session-card:hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.history-session-card-current {
+  border-color: #a5b4fc;
+  background: linear-gradient(135deg, #eef2ff, #ffffff);
+}
+
+.history-session-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.history-session-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #4338ca;
+  background: #e0e7ff;
+  border-radius: 999px;
+  padding: 4px 8px;
+}

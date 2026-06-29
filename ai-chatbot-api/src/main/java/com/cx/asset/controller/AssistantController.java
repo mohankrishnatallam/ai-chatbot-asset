@@ -10,9 +10,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cx.asset.dto.AiResponse;
+import com.cx.asset.dto.ChatSessionSummary;
 import com.cx.asset.service.AiService;
 
 import java.util.List;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 
 
 /**
@@ -31,14 +34,21 @@ public class AssistantController {
     }
 
     @GetMapping("")
-    public AiResponse assistant(@RequestParam String message, @RequestParam String sessionId) {
-        return aiService.chatWithSession(message, sessionId);
+    public AiResponse assistant(@RequestParam String message,
+                                @RequestParam String sessionId,
+                                @RequestParam(required = false) String userId) {
+        return aiService.chatWithSession(message, sessionId, userId);
     }
 
     @DeleteMapping("/session/{sessionId}")
-    public String clearSession(@PathVariable String sessionId) {
-        aiService.clearSession(sessionId);
-        return "Session " + sessionId + " cleared.";
+    public ResponseEntity<?> deleteSession(@PathVariable String sessionId, @RequestParam String userId) {
+        try {
+            chatMemoryService.deleteSession(sessionId, userId);
+            aiService.clearSession(sessionId);
+            return ResponseEntity.ok(Map.of("message", "Session deleted"));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        }
     }
 
     @GetMapping("/debug/sessions")
@@ -49,5 +59,10 @@ public class AssistantController {
     @GetMapping("/history")
     public List<ChatTurn> getHistory(@RequestParam String sessionId) {
         return chatMemoryService.getHistory(sessionId);
+    }
+
+    @GetMapping("/sessions")
+    public List<ChatSessionSummary> getUserSessions(@RequestParam String userId) {
+        return chatMemoryService.getSessionsForUser(userId);
     }
 }

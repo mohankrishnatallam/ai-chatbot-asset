@@ -10,4 +10,6 @@ public interface ChatTurnRepository extends MongoRepository<ChatTurn, String> {
     List<ChatTurn> findBySessionIdOrderBySequenceAsc(String sessionId);
 
     int countBySessionId(String sessionId);
+
+    void deleteBySessionId(String sessionId);
 }

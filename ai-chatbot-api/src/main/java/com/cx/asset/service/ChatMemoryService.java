@@ -1,6 +1,7 @@
 package com.cx.asset.service;
 
 import com.cx.asset.dto.AiResponse;
+import com.cx.asset.dto.ChatSessionSummary;
 import com.cx.asset.entity.ChatSession;
 import com.cx.asset.entity.ChatTurn;
 import com.cx.asset.repository.ChatSessionRepository;
@@ -22,22 +23,25 @@ public class ChatMemoryService {
         this.chatTurnRepository = chatTurnRepository;
     }
 
-    /**
-     * Save one complete exchange (user question + AI response) to MongoDB.
-     */
-    public void saveExchange(String sessionId, String question, AiResponse aiResponse) {
+    public void saveExchange(String sessionId, String userId, String question, AiResponse aiResponse) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseGet(() -> {
                     String title = question.length() > 50
                             ? question.substring(0, 50) + "..."
                             : question;
-                    ChatSession s = new ChatSession(title);
-                    s.setId(sessionId);
-                    return chatSessionRepository.save(s);
+                    ChatSession newSession = new ChatSession(title);
+                    newSession.setId(sessionId);
+                    newSession.setUserId(userId);
+                    return chatSessionRepository.save(newSession);
                 });
+
+        if (userId != null && !userId.isBlank() && session.getUserId() == null) {
+            session.setUserId(userId);
+        }
 
         session.setUpdatedAt(LocalDateTime.now());
         chatSessionRepository.save(session);
+
         int sequence = chatTurnRepository.countBySessionId(sessionId);
         ChatTurn turn = new ChatTurn(sessionId, question, aiResponse, sequence);
         chatTurnRepository.save(turn);
@@ -45,5 +49,28 @@ public class ChatMemoryService {
 
     public List<ChatTurn> getHistory(String sessionId) {
         return chatTurnRepository.findBySessionIdOrderBySequenceAsc(sessionId);
+    }
+
+    public List<ChatSessionSummary> getSessionsForUser(String userId) {
+        return chatSessionRepository.findByUserIdOrderByUpdatedAtDesc(userId).stream()
+                .map(session -> new ChatSessionSummary(
+                        session.getId(),
+                        session.getTitle(),
+                        session.getUpdatedAt(),
+                        chatTurnRepository.countBySessionId(session.getId())
+                ))
+                .toList();
+    }
+
+    public void deleteSession(String sessionId, String userId) {
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session not found"));
+
+        if (session.getUserId() != null && userId != null && !session.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Not allowed to delete this session");
+        }
+
+        chatTurnRepository.deleteBySessionId(sessionId);
+        chatSessionRepository.deleteById(sessionId);
     }
 }

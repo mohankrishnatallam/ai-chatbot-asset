@@ -51,8 +51,26 @@ mvn spring-boot:run
 
 ## Available Endpoints
 
-- `GET /assistant?message={text}` - returns a chat response via the AI assistant service
+- `POST /auth/register` - creates a user in MongoDB (password stored as BCrypt hash)
+- `POST /auth/login` - validates username/password and returns user info
+- `GET /assistant?message={text}&sessionId={id}` - returns a chat response via the AI assistant service
+- `GET /assistant/history?sessionId={id}` - returns persisted chat turns for a session
+- `GET /assistant/sessions?userId={id}` - returns chat sessions for a user
+- `GET /prompts?userId={id}` - returns saved prompts for a user
+- `POST /prompts` - saves a prompt (`{ userId, text }`)
+- `DELETE /assistant/session/{sessionId}?userId={id}` - deletes session and chat turns from MongoDB
+- `DELETE /prompts/{promptId}?userId={id}` - deletes a saved prompt
+- `GET /assistant/debug/sessions` - returns active in-memory session count
 - `GET /model?message={text}` - returns a response using the lower-level chat model API
+
+## Postman (local testing)
+
+Import both files from `postman/`:
+
+1. `AI-Chatbot-API-Local.postman_collection.json`
+2. `AI-Chatbot-API-Local.postman_environment.json`
+
+Select the **AI Chatbot API - Local** environment, start the API, then run the requests against `http://localhost:8082`.
 
 ## Notes
 

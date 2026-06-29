@@ -1,0 +1,125 @@
+.saved-prompts-panel {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 12px 24px;
+}
+
+.saved-prompts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.saved-prompts-title {
+  margin: 0;
+  font-family: 'Sora', 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  color: #1f2937;
+}
+
+.saved-prompts-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.saved-prompts-home-button,
+.saved-prompts-new-button {
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saved-prompts-home-button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.saved-prompts-new-button {
+  border: none;
+  background: linear-gradient(135deg, #0f172a, #3730a3);
+  color: #ffffff;
+}
+
+.saved-prompts-status,
+.saved-prompts-empty {
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.saved-prompts-error {
+  color: #b91c1c;
+  font-size: 0.92rem;
+}
+
+.saved-prompts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.saved-prompt-item {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.saved-prompt-card {
+  flex: 1;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.saved-prompt-card:hover {
+  border-color: #c7d2fe;
+  background: #f8fafc;
+}
+
+.saved-prompt-text {
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: #111827;
+  white-space: pre-wrap;
+}
+
+.saved-prompt-meta {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.saved-prompt-delete-button {
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #b91c1c;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.saved-prompt-delete-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

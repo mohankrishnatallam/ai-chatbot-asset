@@ -4,6 +4,8 @@ import '../styles/authPage.css'
 function AuthPage({ mode, onSubmit, onSwitchMode, onBack }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isLogin = mode === 'login'
   const title = isLogin ? 'Login to continue' : 'Create your account'
@@ -12,9 +14,24 @@ function AuthPage({ mode, onSubmit, onSwitchMode, onBack }) {
     ? 'Using the app for the first time? Register here.'
     : 'Already have an account? Login here.'
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
-    onSubmit({ username, password })
+    setErrorMessage('')
+    setIsSubmitting(true)
+
+    try {
+      await onSubmit({ username, password })
+      setUsername('')
+      setPassword('')
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to complete authentication. Please try again.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -40,6 +57,8 @@ function AuthPage({ mode, onSubmit, onSwitchMode, onBack }) {
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              disabled={isSubmitting}
               required
             />
           </label>
@@ -50,16 +69,25 @@ function AuthPage({ mode, onSubmit, onSwitchMode, onBack }) {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
+              disabled={isSubmitting}
               required
             />
           </label>
 
-          <button type="submit" className="auth-submit">
-            {buttonLabel}
+          {errorMessage && <p className="auth-error">{errorMessage}</p>}
+
+          <button type="submit" className="auth-submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Please wait...' : buttonLabel}
           </button>
         </form>
 
-        <button type="button" className="auth-switch-link" onClick={onSwitchMode}>
+        <button
+          type="button"
+          className="auth-switch-link"
+          onClick={onSwitchMode}
+          disabled={isSubmitting}
+        >
           {helperText}
         </button>
       </section>

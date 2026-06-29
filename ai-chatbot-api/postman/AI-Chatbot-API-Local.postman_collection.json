@@ -1,0 +1,342 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "AI Chatbot API - Local",
+    "description": "Local endpoints for the AI Chatbot backend (Spring Boot on port 8082).\n\n**Setup**\n1. Start the API: `.\\mvnw.cmd spring-boot:run` from `ai-chatbot-api`\n2. Import `AI-Chatbot-API-Local.postman_environment.json` and select it\n3. Set `OPENAI_API_KEY` and `MONGO_PASSWORD` in your shell before starting the server\n\n**Variables**\n- `baseUrl` — default `http://localhost:8082`\n- `sessionId` — reuse across assistant requests to keep chat context",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"demo.user\",\n  \"password\": \"demo-password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Creates a user in MongoDB with a BCrypt password hash."
+          },
+          "response": []
+        },
+        {
+          "name": "Login user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"demo.user\",\n  \"password\": \"demo-password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Validates credentials against the users collection."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Saved Prompts",
+      "item": [
+        {
+          "name": "List saved prompts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prompts?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["prompts"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Returns all saved prompts for the user, newest first."
+          },
+          "response": []
+        },
+        {
+          "name": "Save prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"text\": \"Generate a sales report for last month\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/prompts",
+              "host": ["{{baseUrl}}"],
+              "path": ["prompts"]
+            },
+            "description": "Saves a new prompt to MongoDB for the given user."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete saved prompt",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/prompts/{{promptId}}?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["prompts", "{{promptId}}"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Deletes a saved prompt from MongoDB for the given user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chat Model (low-level)",
+      "item": [
+        {
+          "name": "Chat - default message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/model",
+              "host": ["{{baseUrl}}"],
+              "path": ["model"]
+            },
+            "description": "Direct LangChain4j ChatModel call without tools or session memory."
+          },
+          "response": []
+        },
+        {
+          "name": "Chat - custom message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/model?message=What is the capital of Germany?",
+              "host": ["{{baseUrl}}"],
+              "path": ["model"],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "What is the capital of Germany?",
+                  "description": "User message sent to the LLM"
+                }
+              ]
+            },
+            "description": "Direct LangChain4j ChatModel call without tools or session memory."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Assistant (high-level)",
+      "item": [
+        {
+          "name": "Chat with session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant?message=Generate a sales report&sessionId={{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant"],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "Generate a sales report",
+                  "description": "User question for the enterprise assistant"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}",
+                  "description": "Session identifier for chat memory and MongoDB persistence"
+                }
+              ]
+            },
+            "description": "Main assistant endpoint. Uses tools (order, inventory, reporting) and returns structured AiResponse JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "Check inventory",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant?message=Check inventory for product P100&sessionId={{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant"],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "Check inventory for product P100"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}"
+                }
+              ]
+            },
+            "description": "Example prompt that triggers inventory tools."
+          },
+          "response": []
+        },
+        {
+          "name": "Create order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant?message=Create a new order for customer C001, product P100, quantity 5, shipping address 123 Main St&sessionId={{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant"],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "Create a new order for customer C001, product P100, quantity 5, shipping address 123 Main St"
+                },
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}"
+                }
+              ]
+            },
+            "description": "Example prompt that triggers order tools."
+          },
+          "response": []
+        },
+        {
+          "name": "List user sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/sessions?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant", "sessions"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
+                  "description": "Logged-in user id from auth/login or auth/register"
+                }
+              ]
+            },
+            "description": "Returns all chat sessions for the user, newest first."
+          },
+          "response": []
+        },
+        {
+          "name": "Get chat history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/history?sessionId={{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant", "history"],
+              "query": [
+                {
+                  "key": "sessionId",
+                  "value": "{{sessionId}}",
+                  "description": "Session whose turns are loaded from MongoDB"
+                }
+              ]
+            },
+            "description": "Returns all ChatTurn records for the given session, ordered by sequence."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete session",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/session/{{sessionId}}?userId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant", "session", "{{sessionId}}"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Deletes session and all chat turns from MongoDB and clears in-memory assistant cache."
+          },
+          "response": []
+        },
+        {
+          "name": "Debug - active sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/debug/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["assistant", "debug", "sessions"]
+            },
+            "description": "Returns the count of assistant sessions currently held in memory."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "sessionId",
+      "value": "postman-local-session-001"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "promptId",
+      "value": ""
+    }
+  ]
+}
