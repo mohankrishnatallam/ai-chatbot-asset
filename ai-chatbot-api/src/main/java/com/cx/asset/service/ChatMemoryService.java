@@ -62,14 +62,17 @@ public class ChatMemoryService {
                 .toList();
     }
 
-    public void deleteSession(String sessionId, String userId) {
+    public void validateSessionAccess(String sessionId, String userId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
 
         if (session.getUserId() != null && userId != null && !session.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("Not allowed to delete this session");
+            throw new IllegalArgumentException("Not allowed to access this session");
         }
+    }
 
+    public void deleteSession(String sessionId, String userId) {
+        validateSessionAccess(sessionId, userId);
         chatTurnRepository.deleteBySessionId(sessionId);
         chatSessionRepository.deleteById(sessionId);
     }

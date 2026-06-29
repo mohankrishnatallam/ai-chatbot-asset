@@ -56,7 +56,7 @@ function SessionHistoryPanel({
     setErrorMessage('')
 
     try {
-      const conversations = await fetchSessionHistory(session.sessionId)
+      const conversations = await fetchSessionHistory(session.sessionId, userId)
       setSelectedConversations(conversations)
     } catch {
       setSelectedConversations([])

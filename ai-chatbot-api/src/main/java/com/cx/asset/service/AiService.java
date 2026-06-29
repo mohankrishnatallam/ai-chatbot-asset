@@ -21,6 +21,9 @@ public class AiService {
 
     public AiResponse chatWithSession(String message, String sessionId, String userId) {
         try {
+            SessionContext.set(sessionId, userId);
+            chatMemoryService.validateSessionAccess(sessionId, userId);
+
             Assistant sessionAssistant = assistantConfiguration.getOrCreateAssistant(sessionId);
             String json = sessionAssistant.chat(message);
             AiResponse aiResponse = mapper.readValue(json, AiResponse.class);
@@ -28,8 +31,19 @@ public class AiService {
 
             return aiResponse;
 
+        } catch (IllegalArgumentException e) {
+            return new AiResponse("ERROR", "FAILED", null,
+                    e.getMessage() != null ? e.getMessage() : "Invalid request.");
         } catch (Exception e) {
+            String recoverable = AiErrorMapper.recoverableUserMessage(e);
+            if (recoverable != null) {
+                AiResponse aiResponse = new AiResponse("ORDER", "SUCCESS", null, recoverable);
+                chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
+                return aiResponse;
+            }
             return new AiResponse("ERROR", "FAILED", null, "AI error: " + e.getMessage());
+        } finally {
+            SessionContext.clear();
         }
     }
 

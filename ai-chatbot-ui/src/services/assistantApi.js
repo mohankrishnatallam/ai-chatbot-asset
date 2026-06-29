@@ -1,14 +1,22 @@
-export async function fetchAssistantResponse(message, sessionId, userId) {
-  const params = new URLSearchParams({
-    message,
-    sessionId,
-  })
+const SESSION_ID_HEADER = 'X-Session-Id'
+const USER_ID_HEADER = 'X-User-Id'
 
-  if (userId) {
-    params.set('userId', userId)
+function buildAssistantHeaders(sessionId, userId) {
+  const headers = {}
+  if (sessionId) {
+    headers[SESSION_ID_HEADER] = sessionId
   }
+  if (userId) {
+    headers[USER_ID_HEADER] = userId
+  }
+  return headers
+}
 
-  const response = await fetch(`/assistant?${params}`)
+export async function fetchAssistantResponse(message, sessionId, userId) {
+  const params = new URLSearchParams({ message })
+  const response = await fetch(`/assistant?${params}`, {
+    headers: buildAssistantHeaders(sessionId, userId),
+  })
 
   if (!response.ok) {
     throw new Error(`API request failed with status ${response.status}`)
@@ -19,19 +27,22 @@ export async function fetchAssistantResponse(message, sessionId, userId) {
 }
 
 export async function fetchUserSessions(userId) {
-  const params = new URLSearchParams({ userId })
-  const response = await fetch(`/assistant/sessions?${params}`)
+  const response = await fetch('/assistant/sessions', {
+    headers: { [USER_ID_HEADER]: userId },
+  })
 
   if (!response.ok) {
-    throw new Error(`Failed to load sessions with status ${response.status}`)
+    const result = await response.json().catch(() => ({}))
+    throw new Error(result?.message || `Failed to load sessions with status ${response.status}`)
   }
 
   return response.json()
 }
 
-export async function fetchSessionHistory(sessionId) {
-  const params = new URLSearchParams({ sessionId })
-  const response = await fetch(`/assistant/history?${params}`)
+export async function fetchSessionHistory(sessionId, userId) {
+  const response = await fetch('/assistant/history', {
+    headers: buildAssistantHeaders(sessionId, userId),
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to load session history with status ${response.status}`)
@@ -45,9 +56,9 @@ export async function fetchSessionHistory(sessionId) {
 }
 
 export async function deleteSession(sessionId, userId) {
-  const params = new URLSearchParams({ userId })
-  const response = await fetch(`/assistant/session/${sessionId}?${params}`, {
+  const response = await fetch('/assistant/session', {
     method: 'DELETE',
+    headers: buildAssistantHeaders(sessionId, userId),
   })
 
   if (!response.ok) {

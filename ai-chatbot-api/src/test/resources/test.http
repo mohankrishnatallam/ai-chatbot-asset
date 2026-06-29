@@ -2,13 +2,19 @@
 GET http://localhost:8082/model?message=What is the capital of Germany?
 
 ### High Level API: AI Service with tools
-GET http://localhost:8082/assistant?message=What is the current time?&sessionId=local-test-session-001
+GET http://localhost:8082/assistant?message=What is the current time?
+X-Session-Id: local-test-session-001
+X-User-Id: local-test-user-001
 
 ### Assistant history
-GET http://localhost:8082/assistant/history?sessionId=local-test-session-001
+GET http://localhost:8082/assistant/history
+X-Session-Id: local-test-session-001
+X-User-Id: local-test-user-001
 
-### Clear in-memory session
-DELETE http://localhost:8082/assistant/session/local-test-session-001
+### Delete session
+DELETE http://localhost:8082/assistant/session
+X-Session-Id: local-test-session-001
+X-User-Id: local-test-user-001
 
 ### Debug active sessions
 GET http://localhost:8082/assistant/debug/sessions

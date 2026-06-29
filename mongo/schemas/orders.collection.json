@@ -1,40 +1,56 @@
 {
   "collection": "orders",
-  "description": "Persisted orders for OrderTools (createNewOrder, cancelOrder, createOrder). createNewOrder uses customerId/productId; createOrder uses productName — at least one product identifier should be set in application code.",
+  "description": "Persisted orders for OrderTools (createOrder, cancelOrder, fetchOrders). One document per order with a products array.",
   "bsonFields": {
     "_id": "ObjectId",
-    "orderId": "string (required, unique) — e.g. ORD-<timestamp>",
-    "customerId": "string | null — createNewOrder",
-    "productId": "string | null — createNewOrder",
-    "productName": "string | null — createOrder(productName, quantity)",
-    "quantity": "int (required, minimum 1)",
+    "orderId": "string (required, unique) — e.g. ORD-<timestamp>-<suffix>",
+    "userId": "string (required)",
     "shippingAddress": "string | null",
-    "status": "string (required) — CREATED | CANCELLED | …",
-    "totalPrice": "double | int | long | null",
     "createdAt": "date (required)",
-    "updatedAt": "date (required)"
+    "updatedAt": "date (required)",
+    "createdBy": "string | null",
+    "orderStatus": "string (required) — CREATED | CANCELLED | …",
+    "orderTotalPrice": "double | int | long | null",
+    "currency": "string | null — e.g. USD",
+    "customerId": "string | null",
+    "products": "array of { productId, productName, quantity, unitPrice, totalPrice } — productId matches inventory_items.productId"
   },
   "indexes": [
     { "key": { "orderId": 1 }, "options": { "unique": true } },
-    { "key": { "customerId": 1, "createdAt": -1 } },
-    { "key": { "productId": 1 } }
+    { "key": { "userId": 1, "createdAt": -1 } },
+    { "key": { "products.productId": 1 } }
   ],
   "validator": {
     "$jsonSchema": {
       "bsonType": "object",
-      "required": ["orderId", "quantity", "status", "createdAt", "updatedAt"],
+      "required": ["orderId", "userId", "orderStatus", "createdAt", "updatedAt", "products"],
       "properties": {
         "_id": { "bsonType": "objectId" },
         "orderId": { "bsonType": "string", "minLength": 1 },
-        "customerId": { "bsonType": ["string", "null"] },
-        "productId": { "bsonType": ["string", "null"] },
-        "productName": { "bsonType": ["string", "null"] },
-        "quantity": { "bsonType": "int", "minimum": 1 },
+        "userId": { "bsonType": "string", "minLength": 1 },
         "shippingAddress": { "bsonType": ["string", "null"] },
-        "status": { "bsonType": "string", "minLength": 1 },
-        "totalPrice": { "bsonType": ["double", "int", "long", "null"] },
         "createdAt": { "bsonType": "date" },
-        "updatedAt": { "bsonType": "date" }
+        "updatedAt": { "bsonType": "date" },
+        "createdBy": { "bsonType": ["string", "null"] },
+        "orderStatus": { "bsonType": "string", "minLength": 1 },
+        "orderTotalPrice": { "bsonType": ["double", "int", "long", "null"] },
+        "currency": { "bsonType": ["string", "null"] },
+        "customerId": { "bsonType": ["string", "null"] },
+        "products": {
+          "bsonType": "array",
+          "minItems": 1,
+          "items": {
+            "bsonType": "object",
+            "required": ["productId", "quantity"],
+            "properties": {
+              "productId": { "bsonType": "string", "minLength": 1 },
+              "productName": { "bsonType": ["string", "null"] },
+              "quantity": { "bsonType": "int", "minimum": 1 },
+              "unitPrice": { "bsonType": ["double", "int", "long", "null"] },
+              "totalPrice": { "bsonType": ["double", "int", "long", "null"] }
+            }
+          }
+        }
       },
       "additionalProperties": false
     }

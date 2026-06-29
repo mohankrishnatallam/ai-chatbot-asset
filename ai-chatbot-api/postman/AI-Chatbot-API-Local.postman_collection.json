@@ -172,9 +172,12 @@
           "name": "Chat with session",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "X-Session-Id", "value": "{{sessionId}}" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/assistant?message=Generate a sales report&sessionId={{sessionId}}",
+              "raw": "{{baseUrl}}/assistant?message=Generate a sales report",
               "host": ["{{baseUrl}}"],
               "path": ["assistant"],
               "query": [
@@ -182,11 +185,6 @@
                   "key": "message",
                   "value": "Generate a sales report",
                   "description": "User question for the enterprise assistant"
-                },
-                {
-                  "key": "sessionId",
-                  "value": "{{sessionId}}",
-                  "description": "Session identifier for chat memory and MongoDB persistence"
                 }
               ]
             },
@@ -198,19 +196,18 @@
           "name": "Check inventory",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "X-Session-Id", "value": "{{sessionId}}" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/assistant?message=Check inventory for product P100&sessionId={{sessionId}}",
+              "raw": "{{baseUrl}}/assistant?message=Check inventory for product P100",
               "host": ["{{baseUrl}}"],
               "path": ["assistant"],
               "query": [
                 {
                   "key": "message",
                   "value": "Check inventory for product P100"
-                },
-                {
-                  "key": "sessionId",
-                  "value": "{{sessionId}}"
                 }
               ]
             },
@@ -222,19 +219,18 @@
           "name": "Create order",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "X-Session-Id", "value": "{{sessionId}}" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/assistant?message=Create a new order for customer C001, product P100, quantity 5, shipping address 123 Main St&sessionId={{sessionId}}",
+              "raw": "{{baseUrl}}/assistant?message=Create a new order for customer C001, product P100, quantity 5, shipping address 123 Main St",
               "host": ["{{baseUrl}}"],
               "path": ["assistant"],
               "query": [
                 {
                   "key": "message",
                   "value": "Create a new order for customer C001, product P100, quantity 5, shipping address 123 Main St"
-                },
-                {
-                  "key": "sessionId",
-                  "value": "{{sessionId}}"
                 }
               ]
             },
@@ -267,18 +263,15 @@
           "name": "Get chat history",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              { "key": "X-Session-Id", "value": "{{sessionId}}" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/assistant/history?sessionId={{sessionId}}",
+              "raw": "{{baseUrl}}/assistant/history",
               "host": ["{{baseUrl}}"],
               "path": ["assistant", "history"],
-              "query": [
-                {
-                  "key": "sessionId",
-                  "value": "{{sessionId}}",
-                  "description": "Session whose turns are loaded from MongoDB"
-                }
-              ]
+              "query": []
             },
             "description": "Returns all ChatTurn records for the given session, ordered by sequence."
           },
@@ -288,17 +281,15 @@
           "name": "Delete session",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              { "key": "X-Session-Id", "value": "{{sessionId}}" },
+              { "key": "X-User-Id", "value": "{{userId}}" }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/assistant/session/{{sessionId}}?userId={{userId}}",
+              "raw": "{{baseUrl}}/assistant/session",
               "host": ["{{baseUrl}}"],
-              "path": ["assistant", "session", "{{sessionId}}"],
-              "query": [
-                {
-                  "key": "userId",
-                  "value": "{{userId}}"
-                }
-              ]
+              "path": ["assistant", "session"],
+              "query": []
             },
             "description": "Deletes session and all chat turns from MongoDB and clears in-memory assistant cache."
           },

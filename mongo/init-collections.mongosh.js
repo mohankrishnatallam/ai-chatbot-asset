@@ -114,19 +114,34 @@ if (!conn.getCollectionNames().includes("orders")) {
     validator: {
       $jsonSchema: {
         bsonType: "object",
-        required: ["orderId", "quantity", "status", "createdAt", "updatedAt"],
+        required: ["orderId", "userId", "orderStatus", "createdAt", "updatedAt", "products"],
         properties: {
           _id: { bsonType: "objectId" },
           orderId: { bsonType: "string", minLength: 1 },
-          customerId: { bsonType: ["string", "null"] },
-          productId: { bsonType: ["string", "null"] },
-          productName: { bsonType: ["string", "null"] },
-          quantity: { bsonType: "int", minimum: 1 },
+          userId: { bsonType: "string", minLength: 1 },
           shippingAddress: { bsonType: ["string", "null"] },
-          status: { bsonType: "string", minLength: 1 },
-          totalPrice: { bsonType: ["double", "int", "long", "null"] },
           createdAt: { bsonType: "date" },
           updatedAt: { bsonType: "date" },
+          createdBy: { bsonType: ["string", "null"] },
+          orderStatus: { bsonType: "string", minLength: 1 },
+          orderTotalPrice: { bsonType: ["double", "int", "long", "null"] },
+          currency: { bsonType: ["string", "null"] },
+          customerId: { bsonType: ["string", "null"] },
+          products: {
+            bsonType: "array",
+            minItems: 1,
+            items: {
+              bsonType: "object",
+              required: ["productId", "quantity"],
+              properties: {
+                productId: { bsonType: "string", minLength: 1 },
+                productName: { bsonType: ["string", "null"] },
+                quantity: { bsonType: "int", minimum: 1 },
+                unitPrice: { bsonType: ["double", "int", "long", "null"] },
+                totalPrice: { bsonType: ["double", "int", "long", "null"] },
+              },
+            },
+          },
         },
         additionalProperties: false,
       },
@@ -135,8 +150,8 @@ if (!conn.getCollectionNames().includes("orders")) {
   });
 }
 conn.orders.createIndex({ orderId: 1 }, { unique: true });
-conn.orders.createIndex({ customerId: 1, createdAt: -1 });
-conn.orders.createIndex({ productId: 1 });
+conn.orders.createIndex({ userId: 1, createdAt: -1 });
+conn.orders.createIndex({ "products.productId": 1 });
 
 if (!conn.getCollectionNames().includes("inventory_items")) {
   conn.createCollection("inventory_items", {

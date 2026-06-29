@@ -32,7 +32,7 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
 
     const loadCurrentSession = async () => {
       try {
-        const history = await fetchSessionHistory(sessionId)
+        const history = await fetchSessionHistory(sessionId, authUser?.userId)
         if (isMounted) {
           setConversations(history)
         }
@@ -48,7 +48,7 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
     return () => {
       isMounted = false
     }
-  }, [sessionId, activeView])
+  }, [sessionId, activeView, authUser?.userId])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
