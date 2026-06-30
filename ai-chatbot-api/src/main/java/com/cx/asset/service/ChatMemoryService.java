@@ -62,6 +62,18 @@ public class ChatMemoryService {
                 .toList();
     }
 
+    /**
+     * Validates ownership when a session already exists. New sessions (not yet persisted)
+     * are allowed so the first chat message can create them via {@link #saveExchange}.
+     */
+    public void validateSessionOwnershipIfExists(String sessionId, String userId) {
+        chatSessionRepository.findById(sessionId).ifPresent(session -> {
+            if (session.getUserId() != null && userId != null && !session.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("Not allowed to access this session");
+            }
+        });
+    }
+
     public void validateSessionAccess(String sessionId, String userId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
@@ -75,5 +87,19 @@ public class ChatMemoryService {
         validateSessionAccess(sessionId, userId);
         chatTurnRepository.deleteBySessionId(sessionId);
         chatSessionRepository.deleteById(sessionId);
+    }
+
+    /**
+     * Removes turns after {@code lastSequenceInclusive} so the user can continue the chat
+     * from an earlier point in the conversation.
+     */
+    public void truncateHistoryAfter(String sessionId, String userId, int lastSequenceInclusive) {
+        validateSessionAccess(sessionId, userId);
+        chatTurnRepository.deleteBySessionIdAndSequenceGreaterThan(sessionId, lastSequenceInclusive);
+
+        chatSessionRepository.findById(sessionId).ifPresent(session -> {
+            session.setUpdatedAt(LocalDateTime.now());
+            chatSessionRepository.save(session);
+        });
     }
 }

@@ -8,6 +8,7 @@ import {
   fetchAssistantResponse,
   fetchSessionHistory,
 } from '../services/assistantApi'
+import { getApiErrorMessage } from '../utils/apiError'
 import '../styles/homePage.css'
 
 const navigationItems = [
@@ -17,10 +18,18 @@ const navigationItems = [
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ]
 
-function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSessionDeleted }) {
+function HomePage({
+  authUser,
+  sessionId,
+  onOpenLogin,
+  onLogout,
+  onCurrentSessionDeleted,
+  onContinueSession,
+}) {
   const [activeView, setActiveView] = useState('home')
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [conversations, setConversations] = useState([])
 
   useEffect(() => {
@@ -31,6 +40,9 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
     let isMounted = true
 
     const loadCurrentSession = async () => {
+      setIsLoadingHistory(true)
+      setConversations([])
+
       try {
         const history = await fetchSessionHistory(sessionId, authUser?.userId)
         if (isMounted) {
@@ -39,6 +51,10 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
       } catch {
         if (isMounted) {
           setConversations([])
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingHistory(false)
         }
       }
     }
@@ -72,13 +88,15 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
         { question: trimmedQuestion, answer: answerText },
       ])
       setQuestion('')
-    } catch {
+    } catch (error) {
       setConversations((previous) => [
         ...previous,
         {
           question: trimmedQuestion,
-          answer:
-            'Unable to fetch a response from backend. Please verify the backend is running and then retry.',
+          answer: getApiErrorMessage(
+            error,
+            'Unable to fetch a response from backend. Please verify the backend is running and then retry.'
+          ),
         },
       ])
     } finally {
@@ -99,6 +117,11 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
 
   const handleUsePrompt = (promptText) => {
     setQuestion(promptText)
+    setActiveView('home')
+  }
+
+  const handleContinueSession = (sessionIdToResume) => {
+    onContinueSession?.(sessionIdToResume)
     setActiveView('home')
   }
 
@@ -142,6 +165,7 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
             currentSessionId={sessionId}
             onBackToHome={() => setActiveView('home')}
             onCurrentSessionDeleted={onCurrentSessionDeleted}
+            onContinueSession={handleContinueSession}
           />
         ) : activeView === 'saved' && authUser ? (
           <SavedPromptsPanel
@@ -154,13 +178,16 @@ function HomePage({ authUser, sessionId, onOpenLogin, onLogout, onCurrentSession
             <img src={chatbotGif} alt="Chatbot illustration" className="hero-image" />
             <h1 className="chat-title">Hey! Ready to dive in?</h1>
 
-            {conversations.map((item, index) => (
-              <ChatThread
-                key={`${item.question}-${index}`}
-                question={item.question}
-                answer={item.answer}
-              />
-            ))}
+            {isLoadingHistory && <p className="chat-status">Loading conversation...</p>}
+
+            {!isLoadingHistory &&
+              conversations.map((item, index) => (
+                <ChatThread
+                  key={`${item.question}-${index}`}
+                  question={item.question}
+                  answer={item.answer}
+                />
+              ))}
 
             <ChatComposer
               question={question}

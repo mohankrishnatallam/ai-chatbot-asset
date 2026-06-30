@@ -39,27 +39,29 @@ Replace `<key-here>` with your OpenAI API key, and `<mongodb-username>` and `<mo
 ## Build and Run
 
 ```powershell
-.
-\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-or if Maven is available globally:
+## API documentation (Swagger)
 
-```powershell
-mvn spring-boot:run
-```
+After the server starts, open:
+
+- **Swagger UI:** [http://localhost:8082/swagger-ui.html](http://localhost:8082/swagger-ui.html)
+- **OpenAPI JSON:** [http://localhost:8082/v3/api-docs](http://localhost:8082/v3/api-docs)
+
+Use **Auth → login** first to obtain a `userId`, then set `X-User-Id` (and `X-Session-Id` where required) in the assistant and prompts endpoints.
 
 ## Available Endpoints
 
 - `POST /auth/register` - creates a user in MongoDB (password stored as BCrypt hash)
 - `POST /auth/login` - validates username/password and returns user info
-- `GET /assistant?message={text}&sessionId={id}` - returns a chat response via the AI assistant service
-- `GET /assistant/history?sessionId={id}` - returns persisted chat turns for a session
-- `GET /assistant/sessions?userId={id}` - returns chat sessions for a user
-- `GET /prompts?userId={id}` - returns saved prompts for a user
-- `POST /prompts` - saves a prompt (`{ userId, text }`)
-- `DELETE /assistant/session/{sessionId}?userId={id}` - deletes session and chat turns from MongoDB
-- `DELETE /prompts/{promptId}?userId={id}` - deletes a saved prompt
+- `POST /assistant` - returns a chat response via the AI assistant service (body: `{ message }`; `X-Session-Id`, `X-User-Id` headers required)
+- `GET /assistant/history` - returns persisted chat turns for a session (`X-Session-Id`, `X-User-Id` headers required)
+- `GET /assistant/sessions` - returns chat sessions for a user (`X-User-Id` header required)
+- `GET /prompts` - returns saved prompts for a user (`X-User-Id` header required)
+- `POST /prompts` - saves a prompt (`X-User-Id` header required; body: `{ text }`)
+- `DELETE /assistant/session` - deletes session and chat turns from MongoDB (`X-Session-Id`, `X-User-Id` headers required)
+- `DELETE /prompts/{promptId}` - deletes a saved prompt (`X-User-Id` header required)
 - `GET /assistant/debug/sessions` - returns active in-memory session count
 - `GET /model?message={text}` - returns a response using the lower-level chat model API
 

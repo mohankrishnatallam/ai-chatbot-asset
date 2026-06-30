@@ -11,6 +11,7 @@ import {
   clearSessionId,
   createNewSessionId,
   getOrCreateSessionId,
+  resumeSessionId,
 } from './utils/sessionId'
 
 function App() {
@@ -60,6 +61,15 @@ function App() {
     }
   }
 
+  const handleContinueSession = (sessionIdToResume) => {
+    if (!authUser?.userId || !sessionIdToResume) {
+      return
+    }
+
+    resumeSessionId(authUser.userId, sessionIdToResume)
+    setSessionId(sessionIdToResume)
+  }
+
   return (
     <>
       <HomePage
@@ -68,6 +78,7 @@ function App() {
         onOpenLogin={() => setAuthMode('login')}
         onLogout={handleLogout}
         onCurrentSessionDeleted={handleCurrentSessionDeleted}
+        onContinueSession={handleContinueSession}
       />
 
       {authMode && (

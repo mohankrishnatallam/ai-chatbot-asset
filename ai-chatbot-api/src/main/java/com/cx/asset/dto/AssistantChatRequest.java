@@ -10,12 +10,9 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "User authentication credentials")
-public class AuthRequest {
+@Schema(description = "Assistant chat message")
+public class AssistantChatRequest {
 
-    @Schema(example = "demo-user")
-    private String username;
-
-    @Schema(example = "password123")
-    private String password;
+    @Schema(example = "Create an order with product 23456 - 2 on shipping address Texas")
+    private String message;
 }

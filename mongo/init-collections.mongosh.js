@@ -162,6 +162,7 @@ if (!conn.getCollectionNames().includes("inventory_items")) {
         properties: {
           _id: { bsonType: "objectId" },
           productId: { bsonType: "string", minLength: 1 },
+          productName: { bsonType: "string", minLength: 1 },
           stock: { bsonType: "int", minimum: 0 },
           reserved: { bsonType: "int", minimum: 0 },
           available: { bsonType: "bool" },

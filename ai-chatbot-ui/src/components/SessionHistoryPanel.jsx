@@ -4,6 +4,7 @@ import {
   deleteSession,
   fetchSessionHistory,
   fetchUserSessions,
+  truncateSessionHistory,
 } from '../services/assistantApi'
 import { getApiErrorMessage } from '../utils/apiError'
 import '../styles/sessionHistory.css'
@@ -21,6 +22,7 @@ function SessionHistoryPanel({
   currentSessionId,
   onBackToHome,
   onCurrentSessionDeleted,
+  onContinueSession,
 }) {
   const [sessions, setSessions] = useState([])
   const [selectedSession, setSelectedSession] = useState(null)
@@ -28,6 +30,7 @@ function SessionHistoryPanel({
   const [isLoadingSessions, setIsLoadingSessions] = useState(true)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [deletingSessionId, setDeletingSessionId] = useState(null)
+  const [continuingSessionId, setContinuingSessionId] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
 
   const loadSessions = async () => {
@@ -58,9 +61,11 @@ function SessionHistoryPanel({
     try {
       const conversations = await fetchSessionHistory(session.sessionId, userId)
       setSelectedConversations(conversations)
-    } catch {
+    } catch (error) {
       setSelectedConversations([])
-      setErrorMessage('Unable to load this session. Please try again.')
+      setErrorMessage(
+        getApiErrorMessage(error, 'Unable to load this session. Please try again.')
+      )
     } finally {
       setIsLoadingHistory(false)
     }
@@ -93,10 +98,33 @@ function SessionHistoryPanel({
       await loadSessions()
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to delete this session.'
+        getApiErrorMessage(error, 'Unable to delete this session.')
       )
     } finally {
       setDeletingSessionId(null)
+    }
+  }
+
+  const handleContinueSession = async (session, { fromSequence } = {}) => {
+    if (!session?.sessionId) {
+      return
+    }
+
+    setContinuingSessionId(session.sessionId)
+    setErrorMessage('')
+
+    try {
+      if (typeof fromSequence === 'number') {
+        await truncateSessionHistory(session.sessionId, userId, fromSequence)
+      }
+
+      onContinueSession?.(session.sessionId)
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, 'Unable to continue this chat. Please try again.')
+      )
+    } finally {
+      setContinuingSessionId(null)
     }
   }
 
@@ -116,19 +144,33 @@ function SessionHistoryPanel({
             ← All sessions
           </button>
 
-          <button
-            type="button"
-            className="history-delete-button"
-            onClick={() => handleDeleteSession(selectedSession)}
-            disabled={deletingSessionId === selectedSession.sessionId}
-          >
-            {deletingSessionId === selectedSession.sessionId ? 'Deleting...' : 'Delete'}
-          </button>
+          <div className="history-detail-actions">
+            <button
+              type="button"
+              className="history-continue-button"
+              onClick={() => handleContinueSession(selectedSession)}
+              disabled={continuingSessionId === selectedSession.sessionId}
+            >
+              {continuingSessionId === selectedSession.sessionId ? 'Opening...' : 'Continue chat'}
+            </button>
+
+            <button
+              type="button"
+              className="history-delete-button"
+              onClick={() => handleDeleteSession(selectedSession)}
+              disabled={deletingSessionId === selectedSession.sessionId}
+            >
+              {deletingSessionId === selectedSession.sessionId ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         </div>
 
         <h2 className="history-detail-title">{selectedSession.title}</h2>
         <p className="history-detail-meta">
           {formatSessionDate(selectedSession.updatedAt)} · {selectedSession.turnCount} messages
+        </p>
+        <p className="history-continue-hint">
+          Click a prompt below to continue the chat from that point on Home.
         </p>
 
         {isLoadingHistory && <p className="history-status">Loading conversation...</p>}
@@ -140,6 +182,10 @@ function SessionHistoryPanel({
               key={`${selectedSession.sessionId}-${index}`}
               question={item.question}
               answer={item.answer}
+              onQuestionClick={() =>
+                handleContinueSession(selectedSession, { fromSequence: item.sequence ?? index })
+              }
+              className="history-chat-thread"
             />
           ))}
       </section>
@@ -179,6 +225,15 @@ function SessionHistoryPanel({
               {session.sessionId === currentSessionId && (
                 <span className="history-session-badge">Current session</span>
               )}
+            </button>
+
+            <button
+              type="button"
+              className="history-continue-button history-continue-button-compact"
+              onClick={() => handleContinueSession(session)}
+              disabled={continuingSessionId === session.sessionId}
+            >
+              {continuingSessionId === session.sessionId ? 'Opening...' : 'Continue'}
             </button>
 
             <button

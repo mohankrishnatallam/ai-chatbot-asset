@@ -19,6 +19,8 @@ public class InventoryItem {
 
     private String productId;
 
+    private String productName;
+
     private int stock;
 
     private int reserved;
@@ -27,8 +29,9 @@ public class InventoryItem {
 
     private LocalDateTime updatedAt;
 
-    public InventoryItem(String productId, int stock) {
+    public InventoryItem(String productId, String productName, int stock) {
         this.productId = productId;
+        this.productName = productName;
         this.stock = stock;
         this.reserved = 0;
         this.available = stock > 0;

@@ -2,13 +2,22 @@
 GET http://localhost:8082/model?message=What is the capital of Germany?
 
 ### High Level API: AI Service with tools
-GET http://localhost:8082/assistant?message=What is the current time?
+POST http://localhost:8082/assistant
+Content-Type: application/json
 X-Session-Id: local-test-session-001
 X-User-Id: local-test-user-001
+
+{
+  "message": "What is the current time?"
+}
 
 ### Assistant history
 GET http://localhost:8082/assistant/history
 X-Session-Id: local-test-session-001
+X-User-Id: local-test-user-001
+
+### List user sessions
+GET http://localhost:8082/assistant/sessions
 X-User-Id: local-test-user-001
 
 ### Delete session

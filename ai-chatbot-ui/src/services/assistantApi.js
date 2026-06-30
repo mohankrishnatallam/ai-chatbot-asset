@@ -1,68 +1,93 @@
-const SESSION_ID_HEADER = 'X-Session-Id'
-const USER_ID_HEADER = 'X-User-Id'
+import {
+  ApiError,
+  assertOkResponse,
+  assertSuccessfulAiResponse,
+} from '../utils/apiError'
+import { buildApiHeaders } from '../utils/apiHeaders'
 
-function buildAssistantHeaders(sessionId, userId) {
-  const headers = {}
-  if (sessionId) {
-    headers[SESSION_ID_HEADER] = sessionId
+function requireUserId(userId) {
+  if (!userId) {
+    throw new ApiError('User id is required. Please log in and try again.')
   }
-  if (userId) {
-    headers[USER_ID_HEADER] = userId
-  }
-  return headers
 }
 
 export async function fetchAssistantResponse(message, sessionId, userId) {
-  const params = new URLSearchParams({ message })
-  const response = await fetch(`/assistant?${params}`, {
-    headers: buildAssistantHeaders(sessionId, userId),
-  })
+  requireUserId(userId)
 
-  if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`)
+  if (!sessionId) {
+    throw new ApiError('Session id is required.')
   }
 
-  const result = await response.json()
-  return result?.message || 'No response message found from backend.'
+  const response = await fetch('/assistant', {
+    method: 'POST',
+    headers: {
+      ...buildApiHeaders({ sessionId, userId }),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  })
+
+  const result = await assertOkResponse(response)
+  const aiResponse = assertSuccessfulAiResponse(result)
+  return aiResponse.message || 'No response message found from backend.'
 }
 
 export async function fetchUserSessions(userId) {
+  requireUserId(userId)
+
   const response = await fetch('/assistant/sessions', {
-    headers: { [USER_ID_HEADER]: userId },
+    headers: buildApiHeaders({ userId }),
   })
 
-  if (!response.ok) {
-    const result = await response.json().catch(() => ({}))
-    throw new Error(result?.message || `Failed to load sessions with status ${response.status}`)
-  }
-
-  return response.json()
+  return assertOkResponse(response)
 }
 
 export async function fetchSessionHistory(sessionId, userId) {
-  const response = await fetch('/assistant/history', {
-    headers: buildAssistantHeaders(sessionId, userId),
-  })
+  requireUserId(userId)
 
-  if (!response.ok) {
-    throw new Error(`Failed to load session history with status ${response.status}`)
+  if (!sessionId) {
+    throw new ApiError('Session id is required.')
   }
 
-  const turns = await response.json()
+  const response = await fetch('/assistant/history', {
+    headers: buildApiHeaders({ sessionId, userId }),
+  })
+
+  const turns = await assertOkResponse(response)
   return turns.map((turn) => ({
     question: turn.question,
     answer: turn.answerText || turn.assistantPayload?.message || '',
+    sequence: turn.sequence,
   }))
 }
 
-export async function deleteSession(sessionId, userId) {
-  const response = await fetch('/assistant/session', {
+export async function truncateSessionHistory(sessionId, userId, afterSequence) {
+  requireUserId(userId)
+
+  if (!sessionId) {
+    throw new ApiError('Session id is required.')
+  }
+
+  const params = new URLSearchParams({ afterSequence: String(afterSequence) })
+  const response = await fetch(`/assistant/history/truncate?${params}`, {
     method: 'DELETE',
-    headers: buildAssistantHeaders(sessionId, userId),
+    headers: buildApiHeaders({ sessionId, userId }),
   })
 
-  if (!response.ok) {
-    const result = await response.json().catch(() => ({}))
-    throw new Error(result?.message || `Failed to delete session with status ${response.status}`)
+  await assertOkResponse(response)
+}
+
+export async function deleteSession(sessionId, userId) {
+  requireUserId(userId)
+
+  if (!sessionId) {
+    throw new ApiError('Session id is required.')
   }
+
+  const response = await fetch('/assistant/session', {
+    method: 'DELETE',
+    headers: buildApiHeaders({ sessionId, userId }),
+  })
+
+  await assertOkResponse(response)
 }

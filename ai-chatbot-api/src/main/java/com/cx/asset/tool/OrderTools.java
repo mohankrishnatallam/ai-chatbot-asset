@@ -5,6 +5,7 @@ import com.cx.asset.entity.Order;
 import com.cx.asset.entity.OrderProduct;
 import com.cx.asset.repository.InventoryItemRepository;
 import com.cx.asset.repository.OrderRepository;
+import com.cx.asset.service.OrderMessageHeuristics;
 import com.cx.asset.service.SessionContext;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
@@ -29,6 +31,7 @@ public class OrderTools {
 
     private final OrderRepository orderRepository;
     private final InventoryItemRepository inventoryItemRepository;
+    private final Map<String, List<OrderLine>> pendingOrdersBySession = new ConcurrentHashMap<>();
 
     public OrderTools(OrderRepository orderRepository, InventoryItemRepository inventoryItemRepository) {
         this.orderRepository = orderRepository;
@@ -39,14 +42,14 @@ public class OrderTools {
             Create an order for the logged-in user with one or more products from inventory_items.
             products is a required list; each item must include productId AND quantity (minimum 1).
             Example: products=[{productId: "123456", quantity: 2}, {productId: "456789", quantity: 5}]
-            Only pass productId and quantity from the user — productName, unitPrice, and totalPrice are set when saved.
+            Pass ONLY productId and quantity for each line — never pass productName, unitPrice, or totalPrice.
             unitPrice defaults to 0 when not available. Stock is validated against inventory_items.
             If quantity is missing for any product, do NOT call this tool — ask the user for quantity first.
             shippingAddress is mandatory before the order is saved.
             If shippingAddress is missing, no order is created and the tool asks for the delivery address.
             Validates stock for all products first; if any product is unavailable, no order is saved.
             """)
-    public String createOrder(List<OrderProduct> products,
+    public String createOrder(List<OrderLineInput> products,
                               @P(value = "shipping address for delivery", required = false) String shippingAddress) {
         String userId = requireOwnerUserId();
         if (userId == null) {
@@ -60,17 +63,114 @@ public class OrderTools {
 
         List<OrderLine> lines = normalizeProducts(products);
         if (shippingAddress == null || shippingAddress.isBlank()) {
+            storePendingOrder(lines);
             return "A shipping address is required to create your order. "
                     + formatProductSummary(lines)
                     + ". Please provide your delivery address. No order was created.";
         }
 
-        StockValidation validation = validateStock(lines);
-        if (!validation.unavailable().isEmpty()) {
-            return formatUnavailableResponse(validation);
+        return completeOrder(lines, shippingAddress.trim());
+    }
+
+    /**
+     * Parses combined order messages (products + address in one prompt) without calling the LLM.
+     */
+    public Optional<String> tryCreateOrderFromMessage(String userMessage) {
+        if (!OrderMessageHeuristics.looksLikeNewOrderRequest(userMessage)) {
+            return Optional.empty();
         }
 
-        return saveOrder(userId, validation.resolvedLines(), shippingAddress.trim());
+        List<OrderLine> lines = OrderMessageHeuristics.parseProductLines(userMessage).stream()
+                .map(line -> new OrderLine(line.productId(), line.quantity()))
+                .toList();
+        if (lines.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String shippingAddress = OrderMessageHeuristics.extractShippingAddressFromOrderMessage(userMessage);
+        if (shippingAddress == null || shippingAddress.isBlank()) {
+            storePendingOrder(lines);
+            return Optional.of("A shipping address is required to create your order. "
+                    + formatProductSummary(lines)
+                    + ". Please provide your delivery address. No order was created.");
+        }
+
+        try {
+            return Optional.of(completeOrder(lines, shippingAddress.trim()));
+        } catch (IllegalStateException exception) {
+            return Optional.of(exception.getMessage());
+        }
+    }
+
+    /**
+     * Completes a pending order when the user replies with only a shipping address.
+     * Returns empty when no pending order exists or the message is not an address reply.
+     */
+    public Optional<String> tryFulfillPendingOrder(String userMessage) {
+        String sessionId = SessionContext.getSessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            return Optional.empty();
+        }
+
+        List<OrderLine> pending = pendingOrdersBySession.get(sessionId);
+        if (pending == null || pending.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (OrderMessageHeuristics.looksLikeGreeting(userMessage)
+                || OrderMessageHeuristics.looksLikeNewOrderRequest(userMessage)) {
+            return Optional.empty();
+        }
+
+        String shippingAddress = OrderMessageHeuristics.extractShippingAddress(userMessage);
+        if (shippingAddress == null) {
+            return Optional.empty();
+        }
+
+        String userId = requireOwnerUserId();
+        if (userId == null) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(completeOrder(pending, shippingAddress));
+        } catch (IllegalStateException exception) {
+            return Optional.of(exception.getMessage());
+        }
+    }
+
+    public void clearPendingOrder(String sessionId) {
+        if (sessionId != null) {
+            pendingOrdersBySession.remove(sessionId);
+        }
+    }
+
+    private String completeOrder(List<OrderLine> lines, String shippingAddress) {
+        if (lines == null || lines.isEmpty()) {
+            throw new IllegalStateException("No products are pending for this order.");
+        }
+
+        StockValidation validation = validateStock(lines);
+        if (!validation.unavailable().isEmpty()) {
+            throw new IllegalStateException(formatUnavailableResponse(validation));
+        }
+
+        String userId = requireOwnerUserId();
+        if (userId == null) {
+            throw new IllegalStateException("User ID is required to create orders.");
+        }
+
+        String result = saveOrder(userId, validation.resolvedLines(), shippingAddress);
+        clearPendingOrder(SessionContext.getSessionId());
+        return result;
+    }
+
+    private void storePendingOrder(List<OrderLine> lines) {
+        String sessionId = SessionContext.getSessionId();
+        if (sessionId == null || sessionId.isBlank() || lines == null || lines.isEmpty()) {
+            return;
+        }
+        pendingOrdersBySession.put(sessionId, List.copyOf(lines));
     }
 
     @Tool("Cancel order for the logged-in user")
@@ -220,7 +320,7 @@ public class OrderTools {
     private ResolvedLine resolveLine(OrderLine line, InventoryItem inventory) {
         return new ResolvedLine(
                 inventory.getProductId(),
-                null,
+                inventory.getProductName(),
                 line.quantity(),
                 DEFAULT_UNIT_PRICE
         );
@@ -246,7 +346,7 @@ public class OrderTools {
         return response.toString();
     }
 
-    private String validateProductInputs(List<OrderProduct> products) {
+    private String validateProductInputs(List<OrderLineInput> products) {
         if (products == null || products.isEmpty()) {
             return "Failed to create order: at least one product with productId and quantity is required.";
         }
@@ -255,7 +355,7 @@ public class OrderTools {
         List<String> missingProductId = new ArrayList<>();
         boolean hasValidLine = false;
 
-        for (OrderProduct product : products) {
+        for (OrderLineInput product : products) {
             if (product == null) {
                 continue;
             }
@@ -289,13 +389,13 @@ public class OrderTools {
         return null;
     }
 
-    private List<OrderLine> normalizeProducts(List<OrderProduct> products) {
+    private List<OrderLine> normalizeProducts(List<OrderLineInput> products) {
         if (products == null || products.isEmpty()) {
             return List.of();
         }
 
         Map<String, Integer> merged = new LinkedHashMap<>();
-        for (OrderProduct product : products) {
+        for (OrderLineInput product : products) {
             if (product == null || product.getProductId() == null || product.getProductId().isBlank()) {
                 continue;
             }

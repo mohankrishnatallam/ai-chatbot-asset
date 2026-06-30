@@ -20,6 +20,7 @@ public class InventoryTools {
 
     @Tool("""
             Get the full inventory catalog from inventory_items.
+            Each item includes productId, productName, stock, reserved, and available quantity.
             Products are global — not filtered by sessionId or userId.
             """)
     public String getInventoryDetails() {
@@ -83,9 +84,14 @@ public class InventoryTools {
     }
 
     private String formatItem(InventoryItem item) {
-        return "Product ID: " + item.getProductId()
-                + " | Stock: " + item.getStock()
-                + " | Reserved: " + item.getReserved()
-                + " | Available: " + availableStock(item);
+        StringBuilder details = new StringBuilder();
+        details.append("Product ID: ").append(item.getProductId());
+        if (item.getProductName() != null && !item.getProductName().isBlank()) {
+            details.append(" | Name: ").append(item.getProductName());
+        }
+        details.append(" | Stock: ").append(item.getStock())
+                .append(" | Reserved: ").append(item.getReserved())
+                .append(" | Available: ").append(availableStock(item));
+        return details.toString();
     }
 }

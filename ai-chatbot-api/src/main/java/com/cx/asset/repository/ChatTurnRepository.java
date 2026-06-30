@@ -12,4 +12,6 @@ public interface ChatTurnRepository extends MongoRepository<ChatTurn, String> {
     int countBySessionId(String sessionId);
 
     void deleteBySessionId(String sessionId);
+
+    void deleteBySessionIdAndSequenceGreaterThan(String sessionId, int sequence);
 }

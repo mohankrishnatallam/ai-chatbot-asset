@@ -1,36 +1,32 @@
-async function parseJsonResponse(response) {
-  const result = await response.json().catch(() => ({}))
-
-  if (!response.ok) {
-    throw new Error(result?.message || `Request failed with status ${response.status}`)
-  }
-
-  return result
-}
+import { assertOkResponse } from '../utils/apiError'
+import { buildApiHeaders } from '../utils/apiHeaders'
 
 export async function fetchSavedPrompts(userId) {
-  const params = new URLSearchParams({ userId })
-  const response = await fetch(`/prompts?${params}`)
-  return parseJsonResponse(response)
+  const response = await fetch('/prompts', {
+    headers: buildApiHeaders({ userId }),
+  })
+
+  return assertOkResponse(response)
 }
 
 export async function savePrompt(userId, text) {
   const response = await fetch('/prompts', {
     method: 'POST',
     headers: {
+      ...buildApiHeaders({ userId }),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ userId, text }),
+    body: JSON.stringify({ text }),
   })
 
-  return parseJsonResponse(response)
+  return assertOkResponse(response)
 }
 
 export async function deleteSavedPrompt(promptId, userId) {
-  const params = new URLSearchParams({ userId })
-  const response = await fetch(`/prompts/${promptId}?${params}`, {
+  const response = await fetch(`/prompts/${promptId}`, {
     method: 'DELETE',
+    headers: buildApiHeaders({ userId }),
   })
 
-  return parseJsonResponse(response)
+  return assertOkResponse(response)
 }

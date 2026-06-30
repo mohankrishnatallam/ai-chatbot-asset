@@ -161,6 +161,24 @@
   color: #0f172a;
 }
 
+.user-bubble-interactive {
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.user-bubble-interactive:hover,
+.user-bubble-interactive:focus-visible {
+  background: #e0e7ff;
+  box-shadow: inset 0 0 0 1px #a5b4fc;
+  outline: none;
+}
+
+.chat-status {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin: 0 0 16px;
+}
+
 .assistant-bubble {
   background: #ede9fe;
   color: #312e81;

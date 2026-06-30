@@ -26,3 +26,12 @@ export function getOrCreateSessionId(userId) {
 export function clearSessionId(userId) {
   localStorage.removeItem(getStorageKey(userId))
 }
+
+export function resumeSessionId(userId, sessionId) {
+  if (!userId || !sessionId) {
+    return null
+  }
+
+  localStorage.setItem(getStorageKey(userId), sessionId)
+  return sessionId
+}

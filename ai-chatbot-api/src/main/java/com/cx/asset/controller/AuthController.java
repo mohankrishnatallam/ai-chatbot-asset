@@ -3,6 +3,8 @@ package com.cx.asset.controller;
 import com.cx.asset.dto.AuthRequest;
 import com.cx.asset.dto.AuthResponse;
 import com.cx.asset.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Auth", description = "User registration and login")
 public class AuthController {
 
     private final AuthService authService;
@@ -23,6 +26,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Register a new user")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
         if (request == null) {
             return ResponseEntity.badRequest().body(errorBody("Request body is required"));
@@ -37,6 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login and return user id")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         if (request == null) {
             return ResponseEntity.badRequest().body(errorBody("Request body is required"));

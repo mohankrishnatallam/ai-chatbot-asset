@@ -4,10 +4,17 @@ final class AiErrorMapper {
 
     private AiErrorMapper() {}
 
-    static String recoverableUserMessage(Throwable e) {
+    static String recoverableUserMessage(Throwable e, String userMessage) {
+        if (OrderMessageHeuristics.looksLikeGreeting(userMessage)) {
+            return null;
+        }
+
         String msg = collectMessages(e);
         if (msg.contains("tool call validation failed")
                 || msg.contains("tool_use_failed")) {
+            if (msg.contains("productName") || msg.contains("unitPrice") || msg.contains("totalPrice")) {
+                return "Order could not be created. Use inventory productId values with quantity only.";
+            }
             if (msg.contains("shippingAddress")) {
                 return "Please provide a shipping address to create your order.";
             }
