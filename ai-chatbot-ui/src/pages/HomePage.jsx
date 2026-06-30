@@ -33,6 +33,10 @@ function HomePage({
   const [conversations, setConversations] = useState([])
 
   useEffect(() => {
+    setQuestion('')
+  }, [sessionId, authUser?.userId])
+
+  useEffect(() => {
     if (!sessionId || activeView !== 'home') {
       return
     }
@@ -121,8 +125,15 @@ function HomePage({
   }
 
   const handleContinueSession = (sessionIdToResume) => {
+    setQuestion('')
     onContinueSession?.(sessionIdToResume)
     setActiveView('home')
+  }
+
+  const handleLogout = () => {
+    setQuestion('')
+    setActiveView('home')
+    onLogout?.()
   }
 
   return (
@@ -131,7 +142,7 @@ function HomePage({
         {authUser ? (
           <div className="user-panel">
             <span className="user-greeting">Hi, {authUser.username}</span>
-            <button type="button" className="logout-button" onClick={onLogout}>
+            <button type="button" className="logout-button" onClick={handleLogout}>
               Logout
             </button>
           </div>
