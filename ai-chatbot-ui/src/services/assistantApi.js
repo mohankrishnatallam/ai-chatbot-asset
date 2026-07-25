@@ -5,6 +5,30 @@ import {
 } from '../utils/apiError'
 import { buildApiHeaders } from '../utils/apiHeaders'
 
+function isEmptyData(data) {
+  if (data == null) {
+    return true
+  }
+  if (typeof data !== 'object') {
+    return false
+  }
+  if (Array.isArray(data)) {
+    return data.length === 0
+  }
+  return Object.keys(data).length === 0
+}
+
+function formatAssistantAnswer({ message, data } = {}) {
+  const text = message?.trim() || ''
+
+  if (isEmptyData(data)) {
+    return text || 'No response from assistant.'
+  }
+
+  const dataText = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+  return text ? `${text}\n\n${dataText}` : dataText
+}
+
 function requireUserId(userId) {
   if (!userId) {
     throw new ApiError('User id is required. Please log in and try again.')
@@ -29,7 +53,7 @@ export async function fetchAssistantResponse(message, sessionId, userId) {
 
   const result = await assertOkResponse(response)
   const aiResponse = assertSuccessfulAiResponse(result)
-  return aiResponse.message || 'No response message found from backend.'
+  return formatAssistantAnswer(aiResponse)
 }
 
 export async function fetchUserSessions(userId) {
@@ -56,7 +80,9 @@ export async function fetchSessionHistory(sessionId, userId) {
   const turns = await assertOkResponse(response)
   return turns.map((turn) => ({
     question: turn.question,
-    answer: turn.answerText || turn.assistantPayload?.message || '',
+    answer: formatAssistantAnswer(
+      turn.assistantPayload || { message: turn.answerText, data: null }
+    ),
     sequence: turn.sequence,
   }))
 }

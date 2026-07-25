@@ -183,6 +183,7 @@
   background: #ede9fe;
   color: #312e81;
   margin-bottom: 0;
+  white-space: pre-line;
 }
 
 .composer {
