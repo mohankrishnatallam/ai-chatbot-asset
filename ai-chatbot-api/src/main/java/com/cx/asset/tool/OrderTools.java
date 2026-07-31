@@ -1,5 +1,6 @@
 package com.cx.asset.tool;
 
+import com.cx.asset.dto.AiResponse;
 import com.cx.asset.entity.InventoryItem;
 import com.cx.asset.entity.Order;
 import com.cx.asset.entity.OrderProduct;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 @Component
 public class OrderTools {
@@ -28,6 +30,9 @@ public class OrderTools {
     private static final String ORDER_NOT_FOUND = "Order doesn't exist.";
     private static final String DEFAULT_CURRENCY = "USD";
     private static final double DEFAULT_UNIT_PRICE = 0.0;
+    private static final Pattern FETCH_ORDERS = Pattern.compile(
+            "(?i)^(?:fetch|get|list|show|display)\\s+(?:(?:my|the)\\s+)?orders?[\\s!.?]*$"
+                    + "|^(?:my\\s+)?orders?[\\s!.?]*$");
 
     private final OrderRepository orderRepository;
     private final InventoryItemRepository inventoryItemRepository;
@@ -143,6 +148,29 @@ public class OrderTools {
         if (sessionId != null) {
             pendingOrdersBySession.remove(sessionId);
         }
+    }
+
+    public Optional<AiResponse> tryBuildOrdersResponse(String message) {
+        if (message == null || !FETCH_ORDERS.matcher(message.trim()).matches()) {
+            return Optional.empty();
+        }
+
+        String userId = requireOwnerUserId();
+        if (userId == null) {
+            return Optional.of(new AiResponse("ORDER", "FAILED", null, "User ID is required to fetch orders."));
+        }
+
+        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<Map<String, Object>> orderEntries = new ArrayList<>(orders.size());
+        for (Order order : orders) {
+            orderEntries.add(toOrderEntry(order));
+        }
+
+        String responseMessage = orders.isEmpty()
+                ? "No orders found for your account."
+                : "Orders fetched successfully (" + orders.size() + " orders).";
+
+        return Optional.of(new AiResponse("ORDER", "SUCCESS", Map.of("orders", orderEntries), responseMessage));
     }
 
     private String completeOrder(List<OrderLine> lines, String shippingAddress) {
@@ -495,6 +523,36 @@ public class OrderTools {
             }
         }
         return details.toString();
+    }
+
+    private Map<String, Object> toOrderEntry(Order order) {
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("orderId", order.getOrderId());
+        entry.put("status", order.getOrderStatus());
+        entry.put("total", order.getOrderTotalPrice() != null ? order.getOrderTotalPrice() : 0.0);
+        entry.put("currency", order.getCurrency() != null ? order.getCurrency() : DEFAULT_CURRENCY);
+        entry.put("shippingAddress", order.getShippingAddress());
+        entry.put("createdAt", order.getCreatedAt() != null ? order.getCreatedAt().format(DATE_FORMAT) : null);
+
+        List<Map<String, Object>> products = new ArrayList<>();
+        if (order.getProducts() != null) {
+            for (OrderProduct product : order.getProducts()) {
+                Map<String, Object> productEntry = new LinkedHashMap<>();
+                productEntry.put("productId", product.getProductId());
+                productEntry.put("productName", displayProductName(product));
+                productEntry.put("quantity", product.getQuantity());
+                products.add(productEntry);
+            }
+        }
+        entry.put("products", products);
+        return entry;
+    }
+
+    private String displayProductName(OrderProduct product) {
+        if (product.getProductName() != null && !product.getProductName().isBlank()) {
+            return product.getProductName();
+        }
+        return product.getProductId();
     }
 
     private record OrderLine(String productId, int quantity) {}

@@ -30,7 +30,7 @@ public class ChatModelController {
 
     @PostConstruct
     public void checkEnv() {
-        String key = env.getProperty("OPENAI_API_KEY");
+        String key = env.getProperty("OMNIROUTE_API_KEY");
         System.out.println("Key present: " + (key != null));
     }
 

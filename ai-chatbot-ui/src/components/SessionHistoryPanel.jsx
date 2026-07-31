@@ -32,6 +32,40 @@ function SessionHistoryPanel({
   const [deletingSessionId, setDeletingSessionId] = useState(null)
   const [continuingSessionId, setContinuingSessionId] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [prevUserId, setPrevUserId] = useState(userId)
+
+  if (userId !== prevUserId) {
+    setPrevUserId(userId)
+    setSessions([])
+    setSelectedSession(null)
+    setSelectedConversations([])
+    setIsLoadingSessions(true)
+    setErrorMessage('')
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetchUserSessions(userId)
+      .then((result) => {
+        if (!cancelled) {
+          setSessions(result)
+          setIsLoadingSessions(false)
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setErrorMessage(
+            getApiErrorMessage(error, 'Unable to load your previous sessions. Please try again.')
+          )
+          setIsLoadingSessions(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   const loadSessions = async () => {
     setIsLoadingSessions(true)
@@ -48,10 +82,6 @@ function SessionHistoryPanel({
       setIsLoadingSessions(false)
     }
   }
-
-  useEffect(() => {
-    loadSessions()
-  }, [userId])
 
   const handleSelectSession = async (session) => {
     setSelectedSession(session)

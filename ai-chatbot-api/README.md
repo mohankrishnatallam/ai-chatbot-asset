@@ -1,12 +1,12 @@
 # AI Chatbot API
 
-Java-based backend for the AI Chatbot application. This service exposes API endpoints for chatbot interactions and uses OpenAI via environment configuration.
+Java-based backend for the AI Chatbot application. This service exposes API endpoints for chatbot interactions and uses an OpenAI-compatible LLM (Omniroute) via environment configuration.
 
 ## Prerequisites
 
 - Java JDK 21
 - Maven or the included Maven wrapper (`mvnw` / `mvnw.cmd`)
-- OpenAI API key
+- Omniroute API key (OpenAI-compatible; local gateway default `http://localhost:20128/api/v1`)
 - MongoDB Atlas account with cluster access (for data persistence)
 
 ## API Local Setup
@@ -18,7 +18,7 @@ From your repo root or workspace, change into the API directory using a relative
 cd ../ai-chatbot-api
 $env:JAVA_HOME = "C:\Java\jdk-21.0.11"
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
-$env:OPENAI_API_KEY = "<key-here>"
+$env:OMNIROUTE_API_KEY = "<key-here>"
 $env:MONGO_USERNAME = "<mongodb-username>"
 $env:MONGO_PASSWORD = "<mongodb-password>"
 ```
@@ -28,12 +28,12 @@ $env:MONGO_PASSWORD = "<mongodb-password>"
 cd ../ai-chatbot-api
 set JAVA_HOME=C:\Java\jdk-21.0.11
 set Path=%JAVA_HOME%\bin;%Path%
-set OPENAI_API_KEY=<key-here>
+set OMNIROUTE_API_KEY=<key-here>
 set MONGO_USERNAME=<mongodb-username>
 set MONGO_PASSWORD=<mongodb-password>
 ```
 
-Replace `<key-here>` with your OpenAI API key, and `<mongodb-username>` and `<mongodb-password>` with your MongoDB Atlas credentials.
+Replace `<key-here>` with your Omniroute API key, and `<mongodb-username>` and `<mongodb-password>` with your MongoDB Atlas credentials.
 
 
 ## Build and Run

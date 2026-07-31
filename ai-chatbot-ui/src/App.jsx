@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
 import { login, register } from './services/authApi'
@@ -17,16 +17,17 @@ import {
 function App() {
   const [authMode, setAuthMode] = useState(null)
   const [authUser, setAuthUser] = useState(() => getStoredAuthUser())
-  const [sessionId, setSessionId] = useState(null)
+  const [sessionId, setSessionId] = useState(() => {
+    const storedUser = getStoredAuthUser()
+    return getOrCreateSessionId(storedUser?.userId ?? null)
+  })
+  const [prevAuthUserId, setPrevAuthUserId] = useState(authUser?.userId ?? null)
 
-  useEffect(() => {
-    if (authUser?.userId) {
-      setSessionId(getOrCreateSessionId(authUser.userId))
-      return
-    }
-
-    setSessionId(getOrCreateSessionId(null))
-  }, [authUser])
+  const currentAuthUserId = authUser?.userId ?? null
+  if (currentAuthUserId !== prevAuthUserId) {
+    setPrevAuthUserId(currentAuthUserId)
+    setSessionId(getOrCreateSessionId(currentAuthUserId))
+  }
 
   const handleAuthSubmit = async ({ username, password }) => {
     const authAction = authMode === 'login' ? login : register

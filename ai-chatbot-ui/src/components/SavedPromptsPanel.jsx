@@ -22,6 +22,38 @@ function SavedPromptsPanel({ userId, onBackToHome, onUsePrompt }) {
   const [deletingPromptId, setDeletingPromptId] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [prevUserId, setPrevUserId] = useState(userId)
+
+  if (userId !== prevUserId) {
+    setPrevUserId(userId)
+    setPrompts([])
+    setIsLoading(true)
+    setErrorMessage('')
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetchSavedPrompts(userId)
+      .then((result) => {
+        if (!cancelled) {
+          setPrompts(result)
+          setIsLoading(false)
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setErrorMessage(
+            getApiErrorMessage(error, 'Unable to load saved prompts. Please try again.')
+          )
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   const loadPrompts = async () => {
     setIsLoading(true)
@@ -38,10 +70,6 @@ function SavedPromptsPanel({ userId, onBackToHome, onUsePrompt }) {
       setIsLoading(false)
     }
   }
-
-  useEffect(() => {
-    loadPrompts()
-  }, [userId])
 
   const handleSave = async (text) => {
     await savePrompt(userId, text)

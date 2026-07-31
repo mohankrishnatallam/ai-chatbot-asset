@@ -1,0 +1,47 @@
+Step 1 — Create a folder and go there
+>mkdir C:\omniroute-docker
+>cd C:\omniroute-docker
+
+Step 2 — Create .env in that same folder
+>C:\omniroute-docker\.env
+
+Step 3 — Run the command from that folder
+>cd C:\omniroute-docker
+
+This is for installing omniroute in docker desktop --> docker run -d --name omniroute --restart unless-stopped --stop-timeout 40 --env-file .env -p 20128:20128 -v omniroute-data:/app/data diegosouzapw/omniroute:latest
+
+
+Step 4 (optional):- Confirm the container is up
+
+>docker ps
+You should see omniroute with status Up.
+
+After it starts
+Open in your browser:
+
+http://localhost:20128
+
+Useful commands later
+Stop ->    docker stop omniroute
+Start again -> docker start omniroute
+View logs -> docker logs -f omniroute
+Update to newer image -> docker pull diegosouzapw/omniroute:latest then recreate the container
+
+
+http://localhost:20128/api/v1
+
+auto/omniroute  (This is combo name that we defined)
+
+<OMNIROUTE-KEY>
+
+
+
+1. create api key (enable all options)
+2. connect free tier providers
+3. create combos and inside select all free models.
+4. navgate to endpoints ->copy url and api key from api keys section 
+5. refer those in our java code/IDE.
+
+
+
+ 

@@ -24,9 +24,30 @@ export async function assertOkResponse(response) {
   return body
 }
 
+function toUserFriendlyAiError(message) {
+  if (!message) {
+    return 'The assistant could not complete your request.'
+  }
+
+  if (
+    message.includes('Unexpected end-of-input') ||
+    message.includes('Unexpected character') ||
+    message.includes('JsonEOFException') ||
+    message.includes('was too large')
+  ) {
+    return 'The assistant response was too large to process. Try a more specific request, such as checking one product by ID.'
+  }
+
+  if (message.startsWith('AI error: ')) {
+    return message.slice('AI error: '.length)
+  }
+
+  return message
+}
+
 export function assertSuccessfulAiResponse(result) {
   if (result?.type === 'ERROR' || result?.status === 'FAILED') {
-    throw new ApiError(result?.message || 'The assistant could not complete your request.', {
+    throw new ApiError(toUserFriendlyAiError(result?.message), {
       code: result?.status,
       type: result?.type,
     })

@@ -1,6 +1,7 @@
 package com.cx.asset.service;
 
 import com.cx.asset.config.AssistantConfiguration;
+import com.cx.asset.tool.InventoryTools;
 import com.cx.asset.tool.OrderTools;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +16,17 @@ public class AiService {
     private final ChatMemoryService chatMemoryService;
     private final AssistantConfiguration assistantConfiguration;
     private final OrderTools orderTools;
+    private final InventoryTools inventoryTools;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public AiService(ChatMemoryService chatMemoryService,
                      AssistantConfiguration assistantConfiguration,
-                     OrderTools orderTools) {
+                     OrderTools orderTools,
+                     InventoryTools inventoryTools) {
         this.chatMemoryService = chatMemoryService;
         this.assistantConfiguration = assistantConfiguration;
         this.orderTools = orderTools;
+        this.inventoryTools = inventoryTools;
     }
 
     public AiResponse chatWithSession(String message, String sessionId, String userId) {
@@ -43,6 +47,20 @@ public class AiService {
                 AiResponse aiResponse = toOrderResponse(fulfilledOrder.get());
                 chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
                 assistantConfiguration.clearSession(sessionId);
+                return aiResponse;
+            }
+
+            Optional<AiResponse> ordersResponse = orderTools.tryBuildOrdersResponse(message);
+            if (ordersResponse.isPresent()) {
+                AiResponse aiResponse = ordersResponse.get();
+                chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
+                return aiResponse;
+            }
+
+            Optional<AiResponse> inventoryResponse = inventoryTools.tryBuildInventoryResponse(message);
+            if (inventoryResponse.isPresent()) {
+                AiResponse aiResponse = inventoryResponse.get();
+                chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
                 return aiResponse;
             }
 

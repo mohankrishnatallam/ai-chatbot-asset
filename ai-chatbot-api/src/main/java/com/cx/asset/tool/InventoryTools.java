@@ -1,21 +1,48 @@
 package com.cx.asset.tool;
 
+import com.cx.asset.dto.AiResponse;
 import com.cx.asset.entity.InventoryItem;
 import com.cx.asset.repository.InventoryItemRepository;
 import dev.langchain4j.agent.tool.Tool;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Component
 public class InventoryTools {
+
+    private static final Pattern FETCH_INVENTORY = Pattern.compile(
+            "(?i)^(?:fetch|get|list|show|display)\\s+(?:the\\s+)?(?:full\\s+)?(?:inventory|catalog|products|stock)(?:\\s+details?)?[\\s!.?]*$"
+                    + "|^(?:inventory|catalog|products|stock)[\\s!.?]*$");
 
     private final InventoryItemRepository inventoryItemRepository;
 
     public InventoryTools(InventoryItemRepository inventoryItemRepository) {
         this.inventoryItemRepository = inventoryItemRepository;
+    }
+
+    public Optional<AiResponse> tryBuildInventoryResponse(String message) {
+        if (message == null || !FETCH_INVENTORY.matcher(message.trim()).matches()) {
+            return Optional.empty();
+        }
+
+        List<InventoryItem> items = inventoryItemRepository.findAll();
+        List<Map<String, Object>> inventory = new ArrayList<>(items.size());
+        for (InventoryItem item : items) {
+            inventory.add(toInventoryEntry(item));
+        }
+
+        String responseMessage = items.isEmpty()
+                ? "No products found in inventory."
+                : "Inventory fetched successfully (" + items.size() + " products).";
+
+        return Optional.of(new AiResponse("INVENTORY", "SUCCESS", Map.of("inventory", inventory), responseMessage));
     }
 
     @Tool("""
@@ -81,6 +108,23 @@ public class InventoryTools {
 
     private int availableStock(InventoryItem item) {
         return item.getStock() - item.getReserved();
+    }
+
+    private Map<String, Object> toInventoryEntry(InventoryItem item) {
+        Map<String, Object> entry = new LinkedHashMap<>();
+        entry.put("productId", item.getProductId());
+        entry.put("productName", displayProductName(item));
+        entry.put("stock", item.getStock());
+        entry.put("reserved", item.getReserved());
+        entry.put("available", availableStock(item));
+        return entry;
+    }
+
+    private String displayProductName(InventoryItem item) {
+        if (item.getProductName() != null && !item.getProductName().isBlank()) {
+            return item.getProductName();
+        }
+        return item.getProductId();
     }
 
     private String formatItem(InventoryItem item) {
