@@ -40,7 +40,7 @@ auto/omniroute  (This is combo/model name that we defined)
 Below are the instructions for setting up OmniRoute:
 
 1. Connect the free-tier providers.
-2. Create a combo, then select all the free models from the providers you have connected.
+2. Create a combo and name using "auto/omniroute", then select all the free models from the providers you have connected.
 3. Generate an API key and enable all available permissions/options.
 4. Go to Endpoints, then copy the endpoint URL(http://localhost:20128/api/v1) and the API key from the API Keys section.
 5. Configure your Java application by using the copied endpoint URL and API key in your IDE or project configuration.
