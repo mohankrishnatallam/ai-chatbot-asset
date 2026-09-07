@@ -81,16 +81,13 @@ function HomePage({
     setIsLoading(true)
 
     try {
-      const answerText = await fetchAssistantResponse(
+      const conversation = await fetchAssistantResponse(
         trimmedQuestion,
         sessionId,
         authUser?.userId
       )
 
-      setConversations((previous) => [
-        ...previous,
-        { question: trimmedQuestion, answer: answerText },
-      ])
+      setConversations((previous) => [...previous, conversation])
       setQuestion('')
     } catch (error) {
       setConversations((previous) => [
@@ -197,6 +194,10 @@ function HomePage({
                   key={`${item.question}-${index}`}
                   question={item.question}
                   answer={item.answer}
+                  type={item.type}
+                  data={item.data}
+                  userId={authUser?.userId}
+                  onOpenLogin={onOpenLogin}
                 />
               ))}
 

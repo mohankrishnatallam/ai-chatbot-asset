@@ -18,15 +18,34 @@ function isEmptyData(data) {
   return Object.keys(data).length === 0
 }
 
+function dataForDisplay(data) {
+  if (data == null || typeof data !== 'object' || Array.isArray(data)) {
+    return data
+  }
+
+  const { embed, ...rest } = data
+  return rest
+}
+
 function formatAssistantAnswer({ message, data } = {}) {
   const text = message?.trim() || ''
+  const displayData = dataForDisplay(data)
 
-  if (isEmptyData(data)) {
+  if (isEmptyData(displayData)) {
     return text || 'No response from assistant.'
   }
 
-  const dataText = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+  const dataText = typeof displayData === 'string' ? displayData : JSON.stringify(displayData, null, 2)
   return text ? `${text}\n\n${dataText}` : dataText
+}
+
+function toConversationItem(question, aiResponse) {
+  return {
+    question,
+    answer: formatAssistantAnswer(aiResponse),
+    type: aiResponse?.type || null,
+    data: aiResponse?.data ?? null,
+  }
 }
 
 function requireUserId(userId) {
@@ -53,7 +72,22 @@ export async function fetchAssistantResponse(message, sessionId, userId) {
 
   const result = await assertOkResponse(response)
   const aiResponse = assertSuccessfulAiResponse(result)
-  return formatAssistantAnswer(aiResponse)
+  return toConversationItem(message, aiResponse)
+}
+
+export async function fetchChartsEmbedToken(userId) {
+  requireUserId(userId)
+
+  const response = await fetch('/charts/embed-token', {
+    headers: buildApiHeaders({ userId }),
+  })
+
+  const body = await assertOkResponse(response)
+  if (!body?.token) {
+    throw new ApiError('Charts embed token was not returned.')
+  }
+
+  return body.token
 }
 
 export async function fetchUserSessions(userId) {
@@ -78,13 +112,13 @@ export async function fetchSessionHistory(sessionId, userId) {
   })
 
   const turns = await assertOkResponse(response)
-  return turns.map((turn) => ({
-    question: turn.question,
-    answer: formatAssistantAnswer(
-      turn.assistantPayload || { message: turn.answerText, data: null }
-    ),
-    sequence: turn.sequence,
-  }))
+  return turns.map((turn) => {
+    const payload = turn.assistantPayload || { message: turn.answerText, data: null }
+    return {
+      ...toConversationItem(turn.question, payload),
+      sequence: turn.sequence,
+    }
+  })
 }
 
 export async function truncateSessionHistory(sessionId, userId, afterSequence) {

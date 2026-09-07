@@ -10,7 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
-@RestControllerAdvice(assignableTypes = {AssistantController.class, SavedPromptController.class})
+@RestControllerAdvice(assignableTypes = {AssistantController.class, SavedPromptController.class, ChartsEmbedController.class})
 public class AssistantExceptionHandler {
 
     @ExceptionHandler(MissingRequestHeaderException.class)

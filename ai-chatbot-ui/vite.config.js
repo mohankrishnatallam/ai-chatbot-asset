@@ -24,6 +24,10 @@ export default defineConfig({
         target: apiTarget,
         changeOrigin: true,
       },
+      '/charts': {
+        target: apiTarget,
+        changeOrigin: true,
+      },
     },
   },
 })

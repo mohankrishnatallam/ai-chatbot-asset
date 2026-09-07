@@ -21,6 +21,10 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 $env:OMNIROUTE_API_KEY = "<key-here>"
 $env:MONGO_USERNAME = "<mongodb-username>"
 $env:MONGO_PASSWORD = "<mongodb-password>"
+$env:MONGODB_CHARTS_BASE_URL = "<charts-base-url>"
+$env:MONGODB_CHARTS_SALES_DASHBOARD_ID = "<sales-dashboard-id>"
+$env:MONGODB_CHARTS_INVENTORY_DASHBOARD_ID = "<inventory-dashboard-id>"
+$env:MONGODB_CHARTS_EMBED_SECRET = "<jwt-signing-secret-at-least-32-chars>"
 ```
 
 ### Windows Command Prompt
@@ -31,6 +35,10 @@ set Path=%JAVA_HOME%\bin;%Path%
 set OMNIROUTE_API_KEY=<key-here>
 set MONGO_USERNAME=<mongodb-username>
 set MONGO_PASSWORD=<mongodb-password>
+set MONGODB_CHARTS_BASE_URL=<charts-base-url>
+set MONGODB_CHARTS_SALES_DASHBOARD_ID=<sales-dashboard-id>
+set MONGODB_CHARTS_INVENTORY_DASHBOARD_ID=<inventory-dashboard-id>
+set MONGODB_CHARTS_EMBED_SECRET=<jwt-signing-secret-at-least-32-chars>
 ```
 
 Replace `<key-here>` with your Omniroute API key, and `<mongodb-username>` and `<mongodb-password>` with your MongoDB Atlas credentials.
@@ -64,6 +72,24 @@ Use **Auth → login** first to obtain a `userId`, then set `X-User-Id` (and `X-
 - `DELETE /prompts/{promptId}` - deletes a saved prompt (`X-User-Id` header required)
 - `GET /assistant/debug/sessions` - returns active in-memory session count
 - `GET /model?message={text}` - returns a response using the lower-level chat model API
+- `GET /charts/embed-token` - returns a 60-minute Atlas Charts JWT (`X-User-Id` header required)
+
+## MongoDB Atlas Charts (reports in chat)
+
+Sales and inventory reports embed authenticated Atlas dashboards in the chat bubble. Charts stay free with Atlas. Create the dashboards in Atlas first:
+
+1. Open **Charts** for the project that owns `cluster0` / `chatdb`.
+2. Add a data source for `orders` and `inventory_items`.
+3. Create a **Sales** dashboard (revenue by product, orders by status, orders over time) and an **Inventory** dashboard (stock and reserved vs stock).
+4. On each dashboard: **Embed → Authenticated**. Allow filter field `userId` on Sales.
+5. **Embedding → Authentication providers → Custom JWT**:
+   - Algorithm: `HS256`
+   - Signing key: the same value as `MONGODB_CHARTS_EMBED_SECRET` (at least 32 characters)
+   - Audience / issuer: `ai-chatbot-asset`
+6. Allow origin `http://localhost:5173` plus the production UI origin.
+7. Copy the Charts base URL and both dashboard IDs into the environment variables above.
+
+Do not enable unauthenticated embed. The existing username/password login is reused; no Google or extra login page.
 
 ## Postman (local testing)
 

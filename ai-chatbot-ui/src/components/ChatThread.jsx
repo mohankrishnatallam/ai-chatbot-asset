@@ -1,6 +1,18 @@
-function ChatThread({ question, answer, onClick, onQuestionClick, className = '' }) {
+import AtlasChartEmbed from './AtlasChartEmbed'
+
+function ChatThread({
+  question,
+  answer,
+  data,
+  userId,
+  onOpenLogin,
+  onClick,
+  onQuestionClick,
+  className = '',
+}) {
   const isThreadInteractive = typeof onClick === 'function'
   const isPromptInteractive = typeof onQuestionClick === 'function'
+  const embed = data?.embed
 
   return (
     <article
@@ -51,6 +63,15 @@ function ChatThread({ question, answer, onClick, onQuestionClick, className = ''
 
       <p className="chat-label">Assistant</p>
       <p className="chat-bubble assistant-bubble">{answer}</p>
+      {embed?.dashboardId && embed?.baseUrl ? (
+        <AtlasChartEmbed
+          baseUrl={embed.baseUrl}
+          dashboardId={embed.dashboardId}
+          filter={embed.filter}
+          userId={userId}
+          onOpenLogin={onOpenLogin}
+        />
+      ) : null}
     </article>
   )
 }

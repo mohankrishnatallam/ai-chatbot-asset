@@ -35,6 +35,7 @@ The development server supports hot module replacement, so changes to the code w
 - **React** - UI library
 - **Vite** - Build tool and development server
 - **ESLint** - Code linting
+- **MongoDB Charts Embedding SDK** - authenticated Atlas Charts in report chat bubbles
 
 ## Integration with API
 
