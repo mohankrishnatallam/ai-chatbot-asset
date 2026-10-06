@@ -81,7 +81,7 @@ function HomePage({
     setIsLoading(true)
 
     try {
-      const answerText = await fetchAssistantResponse(
+      const assistantMessage = await fetchAssistantResponse(
         trimmedQuestion,
         sessionId,
         authUser?.userId
@@ -89,7 +89,7 @@ function HomePage({
 
       setConversations((previous) => [
         ...previous,
-        { question: trimmedQuestion, answer: answerText },
+        { question: trimmedQuestion, ...assistantMessage },
       ])
       setQuestion('')
     } catch (error) {
@@ -197,6 +197,7 @@ function HomePage({
                   key={`${item.question}-${index}`}
                   question={item.question}
                   answer={item.answer}
+                  chart={item.chart}
                 />
               ))}
 
