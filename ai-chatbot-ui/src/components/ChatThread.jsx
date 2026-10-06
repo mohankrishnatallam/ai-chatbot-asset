@@ -1,4 +1,6 @@
-import AtlasChartEmbed from './AtlasChartEmbed'
+import { lazy, Suspense } from 'react'
+
+const AtlasChartEmbed = lazy(() => import('./AtlasChartEmbed'))
 
 function ChatThread({
   question,
@@ -64,13 +66,15 @@ function ChatThread({
       <p className="chat-label">Assistant</p>
       <p className="chat-bubble assistant-bubble">{answer}</p>
       {embed?.dashboardId && embed?.baseUrl ? (
-        <AtlasChartEmbed
-          baseUrl={embed.baseUrl}
-          dashboardId={embed.dashboardId}
-          filter={embed.filter}
-          userId={userId}
-          onOpenLogin={onOpenLogin}
-        />
+        <Suspense fallback={<p className="chat-status">Loading report charts...</p>}>
+          <AtlasChartEmbed
+            baseUrl={embed.baseUrl}
+            dashboardId={embed.dashboardId}
+            filter={embed.filter}
+            userId={userId}
+            onOpenLogin={onOpenLogin}
+          />
+        </Suspense>
       ) : null}
     </article>
   )
