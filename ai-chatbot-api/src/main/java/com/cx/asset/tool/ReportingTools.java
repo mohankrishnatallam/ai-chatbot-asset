@@ -1,7 +1,9 @@
 package com.cx.asset.tool;
 
 import com.cx.asset.dto.AiResponse;
+import com.cx.asset.entity.InventoryItem;
 import com.cx.asset.entity.Order;
+import com.cx.asset.repository.InventoryItemRepository;
 import com.cx.asset.repository.OrderRepository;
 import com.cx.asset.service.SessionContext;
 import dev.langchain4j.agent.tool.Tool;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -24,9 +27,12 @@ public class ReportingTools {
             DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH);
 
     private final OrderRepository orderRepository;
+    private final InventoryItemRepository inventoryItemRepository;
 
-    public ReportingTools(OrderRepository orderRepository) {
+    public ReportingTools(OrderRepository orderRepository,
+                          InventoryItemRepository inventoryItemRepository) {
         this.orderRepository = orderRepository;
+        this.inventoryItemRepository = inventoryItemRepository;
     }
 
     public Optional<AiResponse> tryBuildChartResponse(String message) {
@@ -35,6 +41,9 @@ public class ReportingTools {
         }
 
         String text = message.toLowerCase(Locale.ENGLISH);
+        if (isProductStockRequest(text)) {
+            return Optional.of(productStockChart());
+        }
         if (isSalesTrendRequest(text)) {
             return Optional.of(monthlySalesChart());
         }
@@ -55,6 +64,30 @@ public class ReportingTools {
     @Tool("Build a monthly order count report for the logged-in user's orders")
     public Map<String, Object> generateMonthlyOrdersReport() {
         return chartData(monthlyOrdersChart());
+    }
+
+    @Tool("Build a bar chart of the top 10 catalog products by stock quantity")
+    public Map<String, Object> generateProductStockReport() {
+        return chartData(productStockChart());
+    }
+
+    private AiResponse productStockChart() {
+        List<InventoryItem> products = inventoryItemRepository.findAll().stream()
+                .sorted(Comparator.comparingInt(InventoryItem::getStock).reversed())
+                .limit(10)
+                .toList();
+
+        List<String> labels = products.stream()
+                .map(product -> product.getProductName() == null || product.getProductName().isBlank()
+                        ? product.getProductId()
+                        : product.getProductName())
+                .toList();
+        List<Number> values = products.stream()
+                .map(product -> (Number) product.getStock())
+                .toList();
+
+        return chartResponse("bar", "Top 10 Products by Stock", labels, "Stock", values,
+                "Here are the top 10 products by stock quantity:");
     }
 
     private AiResponse monthlyOrdersChart() {
@@ -151,6 +184,14 @@ public class ReportingTools {
     private boolean isMonthlyOrdersRequest(String text) {
         return text.contains("order")
                 && (text.contains("monthly") || text.contains("bar chart") || text.contains("bar graph"));
+    }
+
+    private boolean isProductStockRequest(String text) {
+        boolean product = text.contains("product") || text.contains("catalog");
+        boolean stockRanking = text.contains("stock")
+                && (text.contains("top") || text.contains("chart") || text.contains("graph")
+                || text.contains("highest") || text.contains("most"));
+        return product && stockRanking;
     }
 
     private boolean isSalesTrendRequest(String text) {
