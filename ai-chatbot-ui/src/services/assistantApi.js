@@ -29,6 +29,16 @@ function formatAssistantAnswer({ message, data } = {}) {
   return text ? `${text}\n\n${dataText}` : dataText
 }
 
+function formatAssistantMessage(aiResponse = {}) {
+  const chart = aiResponse.data?.chart
+  return {
+    answer: chart
+      ? aiResponse.message?.trim() || 'Here is your report:'
+      : formatAssistantAnswer(aiResponse),
+    chart: chart || null,
+  }
+}
+
 function requireUserId(userId) {
   if (!userId) {
     throw new ApiError('User id is required. Please log in and try again.')
@@ -53,7 +63,7 @@ export async function fetchAssistantResponse(message, sessionId, userId) {
 
   const result = await assertOkResponse(response)
   const aiResponse = assertSuccessfulAiResponse(result)
-  return formatAssistantAnswer(aiResponse)
+  return formatAssistantMessage(aiResponse)
 }
 
 export async function fetchUserSessions(userId) {
@@ -80,7 +90,7 @@ export async function fetchSessionHistory(sessionId, userId) {
   const turns = await assertOkResponse(response)
   return turns.map((turn) => ({
     question: turn.question,
-    answer: formatAssistantAnswer(
+    ...formatAssistantMessage(
       turn.assistantPayload || { message: turn.answerText, data: null }
     ),
     sequence: turn.sequence,

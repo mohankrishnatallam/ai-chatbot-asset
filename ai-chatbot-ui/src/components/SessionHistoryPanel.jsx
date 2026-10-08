@@ -212,6 +212,7 @@ function SessionHistoryPanel({
               key={`${selectedSession.sessionId}-${index}`}
               question={item.question}
               answer={item.answer}
+              chart={item.chart}
               onQuestionClick={() =>
                 handleContinueSession(selectedSession, { fromSequence: item.sequence ?? index })
               }

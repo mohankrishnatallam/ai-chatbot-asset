@@ -1,4 +1,6 @@
-function ChatThread({ question, answer, onClick, onQuestionClick, className = '' }) {
+import ChartMessage from './ChartMessage'
+
+function ChatThread({ question, answer, chart, onClick, onQuestionClick, className = '' }) {
   const isThreadInteractive = typeof onClick === 'function'
   const isPromptInteractive = typeof onQuestionClick === 'function'
 
@@ -50,7 +52,10 @@ function ChatThread({ question, answer, onClick, onQuestionClick, className = ''
       </p>
 
       <p className="chat-label">Assistant</p>
-      <p className="chat-bubble assistant-bubble">{answer}</p>
+      <div className="chat-bubble assistant-bubble">
+        <p className="assistant-answer">{answer}</p>
+        <ChartMessage chart={chart} />
+      </div>
     </article>
   )
 }

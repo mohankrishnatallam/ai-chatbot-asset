@@ -3,6 +3,7 @@ package com.cx.asset.service;
 import com.cx.asset.config.AssistantConfiguration;
 import com.cx.asset.tool.InventoryTools;
 import com.cx.asset.tool.OrderTools;
+import com.cx.asset.tool.ReportingTools;
 import org.springframework.stereotype.Service;
 
 import com.cx.asset.dto.AiResponse;
@@ -17,16 +18,19 @@ public class AiService {
     private final AssistantConfiguration assistantConfiguration;
     private final OrderTools orderTools;
     private final InventoryTools inventoryTools;
+    private final ReportingTools reportingTools;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public AiService(ChatMemoryService chatMemoryService,
                      AssistantConfiguration assistantConfiguration,
                      OrderTools orderTools,
-                     InventoryTools inventoryTools) {
+                     InventoryTools inventoryTools,
+                     ReportingTools reportingTools) {
         this.chatMemoryService = chatMemoryService;
         this.assistantConfiguration = assistantConfiguration;
         this.orderTools = orderTools;
         this.inventoryTools = inventoryTools;
+        this.reportingTools = reportingTools;
     }
 
     public AiResponse chatWithSession(String message, String sessionId, String userId) {
@@ -60,6 +64,13 @@ public class AiService {
             Optional<AiResponse> inventoryResponse = inventoryTools.tryBuildInventoryResponse(message);
             if (inventoryResponse.isPresent()) {
                 AiResponse aiResponse = inventoryResponse.get();
+                chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
+                return aiResponse;
+            }
+
+            Optional<AiResponse> chartResponse = reportingTools.tryBuildChartResponse(message);
+            if (chartResponse.isPresent()) {
+                AiResponse aiResponse = chartResponse.get();
                 chatMemoryService.saveExchange(sessionId, userId, message, aiResponse);
                 return aiResponse;
             }
